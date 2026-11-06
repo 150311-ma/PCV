@@ -1,0 +1,17 @@
+{
+  "id": "pcv.py.demo",
+  "name": "Python 示例框架",
+  "version": "2.0.0",
+  "kind": "process",
+  "runtime": "python",
+  "script": "main.py",
+  "dependencies": [],
+  "loadPriority": 200,
+  "author": "150311-ma",
+  "description": "一个只用标准库的 Python 框架，用来证明任何语言都能写框架包。",
+  "tags": [
+    "示例",
+    "python"
+  ],
+  "category": "framework"
+}

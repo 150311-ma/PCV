@@ -1,0 +1,17 @@
+{
+  "id": "pcv.stat",
+  "name": "使用统计",
+  "version": "2.0.0",
+  "assembly": "Pcv.Stat.dll",
+  "entry": "pcv.stat.Entry",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 130,
+  "author": "150311-ma",
+  "description": "记打开次数、起始日期、累计时长。只存在本地配置里，不联网。",
+  "tags": [
+    "统计"
+  ],
+  "category": "framework"
+}

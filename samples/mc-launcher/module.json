@@ -1,0 +1,19 @@
+{
+  "id": "pcv.mc.launcher",
+  "name": "Minecraft 启动框架",
+  "version": "2.0.0",
+  "kind": "process",
+  "runtime": "python",
+  "script": "main.py",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 80,
+  "author": "150311-ma",
+  "description": "下载并启动 Minecraft：离线与微软正版登录、库/资源/natives 一并装好，命令都在窗口里敲。",
+  "tags": [
+    "Minecraft",
+    "启动器"
+  ],
+  "category": "游戏"
+}
