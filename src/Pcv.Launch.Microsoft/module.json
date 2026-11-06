@@ -1,0 +1,13 @@
+{
+  "id": "pcv.launch.microsoft",
+  "name": "微软登录",
+  "version": "1.0.0",
+  "assembly": "Pcv.Launch.Microsoft.dll",
+  "entry": "Pcv.Launch.Microsoft.MicrosoftLaunchModule",
+  "category": "framework",
+  "dependencies": [ "pcv.core" ],
+  "loadPriority": 30,
+  "author": "150311-ma",
+  "description": "微软账号登录：OAuth 设备码 → XBL → XSTS → Minecraft Services → 档案。令牌会记住，XErr 翻译成人话。",
+  "tags": [ "登录", "微软" ]
+}

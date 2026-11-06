@@ -1,0 +1,19 @@
+{
+  "id": "pcv.app.demo",
+  "name": "示例软件",
+  "version": "1.0.0",
+  "kind": "process",
+  "runtime": "python",
+  "script": "main.py",
+  "category": "software",
+  "dependencies": [
+    "pcv.core",
+    "pcv.py.demo"
+  ],
+  "loadPriority": 300,
+  "author": "150311-ma",
+  "description": "演示「软件」的三条：有界面、调用框架、自身不含框架。打开时会自动拉起 pcv.py.demo 并向它说话。",
+  "tags": [
+    "示例"
+  ]
+}

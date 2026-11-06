@@ -1,0 +1,22 @@
+<Application x:Class="Pcv.Shell.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <!-- 主题模块起来之前/之后的兜底令牌，和 PCL 的令牌名保持一致 -->
+        <SolidColorBrush x:Key="ColorBrush1" Color="#343D4A" />
+        <SolidColorBrush x:Key="ColorBrush2" Color="#0B5BCB" />
+        <SolidColorBrush x:Key="ColorBrush3" Color="#1370F3" />
+        <SolidColorBrush x:Key="ColorBrush4" Color="#4890F5" />
+        <SolidColorBrush x:Key="ColorBrush5" Color="#96C0F9" />
+        <SolidColorBrush x:Key="ColorBrush6" Color="#D5E6FD" />
+        <SolidColorBrush x:Key="ColorBrush7" Color="#E0EAFD" />
+        <SolidColorBrush x:Key="ColorBrush8" Color="#EAF2FE" />
+        <SolidColorBrush x:Key="ColorBrushGray2" Color="#737373" />
+        <SolidColorBrush x:Key="ColorBrushGray3" Color="#8C8C8C" />
+        <SolidColorBrush x:Key="ColorBrushGray5" Color="#CCCCCC" />
+        <SolidColorBrush x:Key="ColorBrushGray6" Color="#EBEBEB" />
+        <SolidColorBrush x:Key="ColorBrushGray7" Color="#F0F0F0" />
+        <SolidColorBrush x:Key="ColorBrushGray8" Color="#F5F5F5" />
+    </Application.Resources>
+</Application>

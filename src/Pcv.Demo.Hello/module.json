@@ -1,0 +1,17 @@
+{
+  "id": "pcv.demo.hello",
+  "name": "示例框架",
+  "version": "1.0.0",
+  "assembly": "Pcv.Demo.Hello.dll",
+  "entry": "Pcv.Demo.Hello.HelloModule",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 90,
+  "author": "150311-ma",
+  "description": "用来验证「拖进窗口就装好」的示例框架，装完立刻在日志里报到。",
+  "tags": [
+    "demo"
+  ],
+  "category": "framework"
+}

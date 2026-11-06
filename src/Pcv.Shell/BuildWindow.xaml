@@ -1,0 +1,77 @@
+<Window x:Class="Pcv.Shell.BuildWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="构建框架包" Height="540" Width="800" MinHeight="340" MinWidth="520"
+        WindowStyle="None" ResizeMode="CanResize" Background="#0F1620"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="16,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="#F0B429" VerticalAlignment="Center" />
+                <TextBlock Text="在构建：" FontSize="12.5" Foreground="#8B949E" VerticalAlignment="Center" Margin="10,0,0,0" />
+                <TextBlock x:Name="LabScript" FontSize="12.5" FontWeight="SemiBold" Foreground="#E6EDF3"
+                           VerticalAlignment="Center" Margin="4,0,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Width="38" Height="26" Background="Transparent" Cursor="Hand"
+                    Click="BtnClose_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="#8B949E" StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shell" Property="Background" Value="#33FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+
+        <Border Grid.Row="1" Background="#0B1118" CornerRadius="10" Margin="14,0,14,0">
+            <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" Padding="14,10">
+                <TextBlock x:Name="Output" FontFamily="Consolas, Microsoft YaHei UI" FontSize="12"
+                           Foreground="#C9D1D9" LineHeight="18" TextWrapping="Wrap" />
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="16,10,16,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="LabStatus" VerticalAlignment="Center" FontSize="12" Foreground="#8B949E"
+                       TextTrimming="CharacterEllipsis" TextWrapping="Wrap" MaxHeight="40" />
+            <Button x:Name="BtnInstall" Grid.Column="1" Content="装进 PCV" Width="110" Height="36"
+                    Margin="12,0,0,0" Background="#1F6FEB" Foreground="White" BorderThickness="0"
+                    Cursor="Hand" IsEnabled="False" Click="BtnInstall_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>
