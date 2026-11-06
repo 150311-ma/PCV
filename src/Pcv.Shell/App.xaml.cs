@@ -100,13 +100,29 @@ namespace Pcv.Shell
                 Shutdown(ok && prompt.Length > 500 ? 0 : 2);
                 return;
             }
+            var modulesDirectory = Path.Combine(baseDirectory, "modules");
+
+            // 上次因为"模块正在跑、文件被占用"而排队的安装，在这里换上。
+            // 必须在 ModuleHost 扫目录之前——那时还没有任何 dll 被加载，目录随便挪。
+            try
+            {
+                var applied = Pcv.Modular.Packages.PackageInstaller.ApplyPending(modulesDirectory,
+                    message => Console.WriteLine(message));
+                if (applied.Count > 0)
+                    Console.WriteLine("已应用排队安装：" + string.Join("、", applied));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("应用排队安装失败：" + ex.Message);
+            }
+
             _host = new ModuleHost(new ModuleHostOptions
             {
-                ModulesDirectory = Path.Combine(baseDirectory, "modules"),
+                ModulesDirectory = modulesDirectory,
                 LogFile = Path.Combine(baseDirectory, "logs", "modules.log"),
                 EchoToConsole = false,
                 HostName = "PAINCHARNWAV",
-                HostVersion = "2.0.0"
+                HostVersion = "2.10.0"
             });
 
             ModuleLoadReport report;
