@@ -1,0 +1,133 @@
+<Window x:Class="PCV.Setup.InstallWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="PAINCHARNWAV 安装程序" Height="420" Width="660"
+        WindowStyle="None" ResizeMode="CanMinimize" Background="#F3F6FB"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="20,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <TextBlock Text="安装 PAINCHARNWAV" VerticalAlignment="Center" FontSize="13"
+                       Foreground="#5B6472" />
+            <Button HorizontalAlignment="Right" Width="38" Height="26" Background="Transparent"
+                    Cursor="Hand" Click="BtnClose_Click"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="#5B6472" StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shell" Property="Background" Value="#33000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+
+        <Border Grid.Row="1" Background="White" CornerRadius="16" Margin="18,0,18,18" Padding="28,24">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- 标题 -->
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="assets/pcv.png" Width="52" Height="52"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <StackPanel Margin="14,2,0,0">
+                        <TextBlock Text="PAINCHARNWAV" FontSize="22" FontWeight="Bold" Foreground="#1B2430" />
+                        <TextBlock x:Name="LabVersion" Text="1.0.0 · 简称 PCV · 一个只负责装框架的壳"
+                                   FontSize="12" Foreground="#7C8798" Margin="0,4,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 路径 -->
+                <StackPanel Grid.Row="1" Margin="0,24,0,0">
+                    <TextBlock Text="装到哪" FontSize="12" Foreground="#5B6472" Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border BorderBrush="#D8E1EE" BorderThickness="1" CornerRadius="8" Background="#FAFCFF">
+                            <TextBox x:Name="BoxPath" BorderThickness="0" Background="Transparent"
+                                     Padding="12,9" Foreground="#1B2430" FontSize="12.5" />
+                        </Border>
+                        <Button Grid.Column="1" Content="浏览…" Width="84" Height="36" Margin="8,0,0,0"
+                                Cursor="Hand" Background="#EFF4FB" BorderThickness="0" Click="BtnBrowse_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                    <TextBlock Text="装在当前用户目录下，不需要管理员权限；桌面和开始菜单都会有快捷方式。"
+                               FontSize="11.5" Foreground="#8A94A3" Margin="2,8,0,0" />
+                </StackPanel>
+
+                <!-- 进度 -->
+                <StackPanel Grid.Row="2" Margin="0,22,0,0">
+                    <ProgressBar x:Name="Bar" Height="6" Minimum="0" Maximum="100" Value="0"
+                                 Background="#EAF0F8" Foreground="#1370F3" BorderThickness="0" />
+                    <TextBlock x:Name="LabStatus" Text="准备好了，点安装" FontSize="12" Margin="2,10,0,0"
+                               Foreground="#5B6472" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- 成功后出现 -->
+                <StackPanel x:Name="PanDone" Grid.Row="3" Margin="0,18,0,0" Visibility="Collapsed">
+                    <TextBlock Text="装好了。" FontSize="16" FontWeight="SemiBold" Foreground="#1B8A4B" />
+                    <TextBlock x:Name="LabTarget" FontSize="12" Foreground="#7C8798" Margin="0,8,0,0"
+                               TextWrapping="Wrap" />
+                    <CheckBox x:Name="CheckLaunch" Content="现在打开 PCV" IsChecked="True" Margin="0,16,0,0"
+                              Foreground="#1B2430" />
+                </StackPanel>
+
+                <!-- 按钮 -->
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                    <Button x:Name="BtnCancel" Content="取消" Width="92" Height="36" Margin="0,0,10,0"
+                            Cursor="Hand" Background="#EFF4FB" BorderThickness="0" Click="BtnCancel_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button x:Name="BtnInstall" Content="安装" Width="118" Height="36" Cursor="Hand"
+                            Background="#1370F3" Foreground="White" BorderThickness="0" Click="BtnInstall_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

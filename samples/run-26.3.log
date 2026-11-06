@@ -1,0 +1,139 @@
+PCV Minecraft 框架
+  数据目录：C:/Users/13044/WorkBuddy/2026-11-05-19-23-27/PCL-MultiModule/tmp-mcdata\minecraft
+  已装版本：1.20.1、26.3
+  账号：Steve（offline）
+  Java：C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe
+
+敲 help 看命令。第一次用：#  login offline Steve  →  install 1.20.1  →  run 1.20.1
+@@PCV {"type": "title", "text": "Minecraft"}
+@@PCV {"type": "title", "text": "离线：Steve"}
+离线登录成功：Steve（UUID 5627dd98-e6be-3c21-b8a8-e92344183641）
+@@PCV {"type": "title", "text": "运行 26.3"}
+→ 正在启动 26.3（Java 25，内存 2048 MB）
+→ 启动命令（截断显示）：
+  "C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe" -Xmx2048m -Xms512m -Dlog4j.configurationFile=C:/Users/13044/WorkBuddy/2026-11-05-19-23-27/PCL-MultiModule/tmp-mcdata\minecraft\assets\log_configs\client-1.21.2.xml -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:StackShadowPages=32 --enable-native-access=ALL-UNNAMED --add-exports java.base/jdk.internal.misc=ALL-UNNAMED -Djava.library.path=C:/Users/13044/WorkBuddy/2026-11-05-19-23-27/PCL-MultiModule/tmp-mcdata\minecraft\versions\26.3\natives/java -Djna.tmpdir=C:/Users/13044/WorkBuddy/2026-11-05-19-23-27/PCL-MultiModule/tmp-mcdata\minecraft\versions\26.3\natives/jna -Dorg.lwjgl.system.SharedLibraryExtractPath=C:/Users/13044/WorkBuddy/2026-11-05-19-23-27/PCL-MultiModule/tmp-mcdata\minecraft\versions\26.3\natives/lwjgl -Dio.netty.native.workdir=C:/Users/13044/WorkBuddy/2026-11…
+游戏进程 PID=34116，日志会继续往这里冒。
+    <log4j:Event logger="com.mojang.datafixers.DataFixerBuilder" timestamp="1793887556638" level="INFO" thread="Datafixer Bootstrap #0">
+      <log4j:Message><![CDATA[307 Datafixer optimizations took 472 milliseconds]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.authlib.services.MinecraftServicesDiscoveryService" timestamp="1793887563359" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887563384" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Setting user: Steve]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887563487" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Backend library: LWJGL version 3.4.3+4]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.platform.SdlDebug" timestamp="1793887563533" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[SDL [SYSTEM]: App name: Minecraft]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.platform.SdlDebug" timestamp="1793887563534" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[SDL [SYSTEM]: App version: 26.3]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.platform.SdlDebug" timestamp="1793887563534" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[SDL [SYSTEM]: App ID: com.mojang.minecraft]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.platform.SdlDebug" timestamp="1793887563535" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887565133" level="ERROR" thread="Download-2">
+      <log4j:Message><![CDATA[Failed to fetch user properties]]></log4j:Message>
+      <log4j:Throwable><![CDATA[com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+  	at com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:70)
+  	at com.mojang.authlib.services.MinecraftServicesUserApiService.fetchProperties(MinecraftServicesUserApiService.java:168)
+  	at net.minecraft.client.Minecraft.lambda$new$1(Minecraft.java:451)
+  	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+  	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+  	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+  	at java.base/java.lang.Thread.run(Thread.java:1474)
+  Caused by: MinecraftClientHttpException[type=HTTP_ERROR, status=401, response=ErrorResponse[path=/player/attributes, error=null, errorMessage=null, details=null]]
+  	at com.mojang.authlib.minecraft.client.MinecraftClient.buildHttpException(MinecraftClient.java:170)
+  	at com.mojang.authlib.minecraft.client.MinecraftClient.readServiceResponse(MinecraftClient.java:147)
+  	at com.mojang.authlib.minecraft.client.MinecraftClient.getWithEtag(MinecraftClient.java:81)
+  	at com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:65)
+  	at com.mojang.authlib.services.MinecraftServicesUserApiService.fetchProperties(MinecraftServicesUserApiService.java:118)
+  	... 5 more
+  ]]></log4j:Throwable>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887565469" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Using graphics backend OpenGL, using drivers: 3.3.0 NVIDIA 616.92]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887565469" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Using graphics device: NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2 (NVIDIA Corporation)]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1793887565469" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.platform.Window" timestamp="1793887565528" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created window using SDL video driver: windows]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.server.packs.resources.ReloadableResourceManager" timestamp="1793887566278" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Reloading ResourceManager: vanilla, vanilla]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.realmsclient.client.RealmsClient" timestamp="1793887566328" level="INFO" thread="Download-1">
+      <log4j:Message><![CDATA[Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: 00000000000000000000000000000000]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.realmsclient.client.RealmsClient" timestamp="1793887566329" level="ERROR" thread="Download-1">
+      <log4j:Message><![CDATA[Failed to fetch Realms feature flags]]></log4j:Message>
+      <log4j:Throwable><![CDATA[com.mojang.realmsclient.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: 00000000000000000000000000000000'
+  	at com.mojang.realmsclient.client.RealmsClient.execute(RealmsClient.java:625)
+  	at com.mojang.realmsclient.client.RealmsClient.fetchFeatureFlags(RealmsClient.java:204)
+  	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789)
+  	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+  	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+  	at java.base/java.lang.Thread.run(Thread.java:1474)
+  ]]></log4j:Throwable>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1793887566340" level="INFO" thread="Worker-Main-22">
+      <log4j:Message><![CDATA[Found unifont_pua-17.0.01.hex, loading]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1793887566342" level="INFO" thread="Worker-Main-21">
+      <log4j:Message><![CDATA[Found unifont_all_no_pua-17.0.01.hex, loading]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1793887566399" level="INFO" thread="Worker-Main-14">
+      <log4j:Message><![CDATA[Found unifont_jp_patch-17.0.01.hex, loading]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="com.mojang.blaze3d.audio.Library" timestamp="1793887570268" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[OpenAL initialized on device OpenAL Soft on 扬声器 (USB AUDIO)]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.sounds.SoundEngine" timestamp="1793887570273" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Sound engine started]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570274" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570321" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570331" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570335" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570341" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570349" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570352" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570525" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570681" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570725" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570731" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas]]></log4j:Message>
+    </log4j:Event>
+    <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1793887570735" level="INFO" thread="Render thread">
+      <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas]]></log4j:Message>
+    </log4j:Event>
+输入已经关闭，但游戏还在跑，等它退出…

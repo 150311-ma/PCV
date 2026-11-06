@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Pcv.Modular.Cli</RootNamespace>
+    <AssemblyName>Pcv.Modular.Cli</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pcv.Modular.Abstractions\Pcv.Modular.Abstractions.csproj" />
+    <ProjectReference Include="..\Pcv.Modular.Host\Pcv.Modular.Host.csproj" />
+    <ProjectReference Include="..\Pcv.Modular.Packages\Pcv.Modular.Packages.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

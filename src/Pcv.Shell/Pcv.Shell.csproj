@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Pcv.Shell</RootNamespace>
+    <AssemblyName>PCV</AssemblyName>
+    <Product>PAINCHARNWAV</Product>
+    <AssemblyTitle>PAINCHARNWAV</AssemblyTitle>
+    <Company>PAINCHARNWAV</Company>
+    <ApplicationIcon>..\..\assets\pcv.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <ApplicationIcon />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pcv.Modular.Abstractions\Pcv.Modular.Abstractions.csproj" />
+    <ProjectReference Include="..\Pcv.Modular.Host\Pcv.Modular.Host.csproj" />
+    <ProjectReference Include="..\Pcv.Modular.Packages\Pcv.Modular.Packages.csproj" />
+    <ProjectReference Include="..\Pcv.Modular.Runtime\Pcv.Modular.Runtime.csproj" />
+    <!-- 只保证先构建模块，不产生编译期引用：壳永远不直接 new 模块里的类型 -->
+    <ProjectReference Include="..\Pcv.Core\Pcv.Core.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\Pcv.Theme\Pcv.Theme.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\PCL.Launch.Microsoft\PCL.Launch.Microsoft.vbproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <!-- 图标走资源 URI（/assets/pcv.png），提示词嵌进程序集，拷丢了也还在 -->
+  <ItemGroup>
+    <Resource Include="..\..\assets\pcv-256.png" Link="assets\pcv.png" />
+    <EmbeddedResource Include="..\..\assets\prompt-framework.md" LogicalName="PCV.prompt-framework.md" />
+  </ItemGroup>
+
+  <!--
+    把每个模块摆成 <输出目录>/modules/<模块 Id>/ 的形状：
+    加载器只认目录 + module.json，所以这里必须按 Id 建目录，不能全丢一个文件夹。
+    只复制模块自己的 dll 与清单，契约 dll 由宿主提供，避免同名程序集被重复加载。
+  -->
+  <Target Name="ArrangeModules" AfterTargets="Build">
+    <ItemGroup>
+      <CoreModuleFiles Include="..\Pcv.Core\bin\$(Configuration)\Pcv.Core.dll" />
+      <CoreModuleFiles Include="..\Pcv.Core\module.json" />
+      <ThemeModuleFiles Include="..\Pcv.Theme\bin\$(Configuration)\Pcv.Theme.dll" />
+      <ThemeModuleFiles Include="..\Pcv.Theme\module.json" />
+      <LoginModuleFiles Include="..\PCL.Launch.Microsoft\bin\$(Configuration)\PCL.Launch.Microsoft.dll" />
+      <LoginModuleFiles Include="..\PCL.Launch.Microsoft\module.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CoreModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.core" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ThemeModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.theme" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LoginModuleFiles)" DestinationFolder="$(OutDir)modules\pcl.launch.microsoft" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,89 @@
+<Window x:Class="Pcv.Shell.ProcessWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="框架" Height="560" Width="780" MinHeight="360" MinWidth="520"
+        WindowStyle="None" ResizeMode="CanResize" Background="#0F1620"
+        WindowStartupLocation="CenterScreen" ShowInTaskbar="True"
+        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 深色标题栏：这是"框架自己的窗口"，跟宿主不是一套皮肤 -->
+        <Grid Grid.Row="0" Margin="16,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="#3DDC84" VerticalAlignment="Center" />
+                <TextBlock x:Name="LabTitle" Text="框架" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0"
+                           VerticalAlignment="Center" Foreground="#E6EDF3" />
+                <TextBlock x:Name="LabSub" FontSize="11" Margin="10,1,0,0" VerticalAlignment="Center" Foreground="#7D8590" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="BtnStop" Content="停止" Height="26" Padding="12,0" Margin="0,0,6,0"
+                        Background="#1F2A37" Foreground="#C9D1D9" BorderThickness="0" Cursor="Hand"
+                        Click="BtnStop_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                <Button Width="38" Height="26" Background="Transparent" Cursor="Hand"
+                        Click="BtnClose_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                                <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="#8B949E" StrokeThickness="1.6"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Shell" Property="Background" Value="#33FFFFFF" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 输出：框架自己 print 的东西都在这 -->
+        <Border Grid.Row="1" Background="#0B1118" CornerRadius="10" Margin="14,0,14,0">
+            <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" Padding="14,10">
+                <TextBlock x:Name="Output" FontFamily="Consolas, Microsoft YaHei UI" FontSize="12.5"
+                           Foreground="#C9D1D9" LineHeight="19" TextWrapping="Wrap" />
+            </ScrollViewer>
+        </Border>
+
+        <!-- 输入：按回车发到它的 stdin -->
+        <Grid Grid.Row="2" Margin="14,10,14,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Background="#161D26" CornerRadius="10" BorderBrush="#26313D" BorderThickness="1">
+                <TextBox x:Name="Input" Background="Transparent" BorderThickness="0" Foreground="#E6EDF3"
+                         CaretBrush="#E6EDF3" Padding="12,9" FontFamily="Consolas, Microsoft YaHei UI"
+                         KeyDown="Input_KeyDown" />
+            </Border>
+            <Button Grid.Column="1" Content="发送" Width="72" Height="38" Margin="8,0,0,0" Cursor="Hand"
+                    Background="#1F6FEB" Foreground="White" BorderThickness="0" Click="BtnSend_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

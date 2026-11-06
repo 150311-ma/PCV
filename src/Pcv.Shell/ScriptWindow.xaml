@@ -1,0 +1,69 @@
+<Window x:Class="Pcv.Shell.ScriptWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="粘贴脚本" Height="560" Width="760" MinHeight="360" MinWidth="520"
+        WindowStyle="None" ResizeMode="CanResize" Background="#F3F6FB"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="18,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <TextBlock Text="把 Python 代码贴进来" FontSize="13" FontWeight="SemiBold"
+                       VerticalAlignment="Center" Foreground="#343D4A" />
+            <Button HorizontalAlignment="Right" Width="38" Height="26" Background="Transparent" Cursor="Hand"
+                    Click="BtnClose_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="#5B6472" StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shell" Property="Background" Value="#33000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+
+        <TextBlock Grid.Row="1" Margin="20,0,20,10" FontSize="12" Foreground="#7C8798" TextWrapping="Wrap"
+                   Text="不用建工程，贴完点运行就行。它会在自己的目录里跑，输出开一个独立窗口。print 的内容直接显示，输入走那个窗口的输入框。" />
+
+        <Border Grid.Row="2" Background="#0B1118" CornerRadius="12" Margin="18,0,18,0">
+            <TextBox x:Name="Code" Background="Transparent" BorderThickness="0" Foreground="#C9D1D9"
+                     CaretBrush="#E6EDF3" Padding="14,12" AcceptsReturn="True" AcceptsTab="True"
+                     FontFamily="Consolas, Microsoft YaHei UI" FontSize="12.5"
+                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                     TextWrapping="NoWrap" />
+        </Border>
+
+        <Grid Grid.Row="3" Margin="18,12,18,14">
+            <TextBlock x:Name="LabHint" VerticalAlignment="Center" FontSize="11.5" Foreground="#8A94A3" />
+            <Button x:Name="BtnRun" Content="运行" Width="96" Height="36" HorizontalAlignment="Right"
+                    Cursor="Hand" Background="{DynamicResource ColorBrush3}" Foreground="White"
+                    BorderThickness="0" Click="BtnRun_Click">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>PCV.Setup</RootNamespace>
+    <AssemblyName>PCV-Setup</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <ApplicationIcon>..\..\assets\pcv.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Product>PAINCHARNWAV 安装程序</Product>
+    <AssemblyTitle>PAINCHARNWAV 安装程序</AssemblyTitle>
+    <Company>PAINCHARNWAV</Company>
+    <Version>1.0.0</Version>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 待安装的东西整个塞进 exe，单个文件拿走就能装 -->
+    <EmbeddedResource Include="payload.zip" LogicalName="PCV.Setup.payload.zip" />
+    <Resource Include="..\..\assets\pcv-256.png" Link="assets\pcv.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+</Project>
