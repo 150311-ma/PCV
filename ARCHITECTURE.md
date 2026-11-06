@@ -3,93 +3,118 @@
 ## 一、分层
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ Pcv.Shell（壳）                                          │
-│   只做三件事：跑加载器 / 显示模块状态 / 退出时收尾        │
-└───────────────▲──────────────────────────────────────────┘
-                │ 只依赖契约
-┌───────────────┴──────────────────────────────────────────┐
-│ Pcv.Modular.Abstractions（契约）                          │
-│   IPclModule · ModuleManifest · IServiceRegistry          │
-│   IThemeService · IMicrosoftAuthService · ISettingsService│
-└───────────────▲──────────────────────────────────────────┘
-                │ 实现契约
-┌───────────────┴──────────────────────────────────────────┐
-│ pcv.core → pcv.theme → …（模块之间只依赖契约，不互相引用程序集）    │
-│   每个模块 = 一个独立 dll + 一份 module.json              │
-└──────────────────────────────────────────────────────────┘
-                ▲
-                │ 发现 / 解析 / 加载 / 启动
-        Pcv.Modular.Host（加载器）
+┌──────────────────────────────────────────────────────────────┐
+│ Pcv.Shell   PCV.exe                                          │
+│   界面（四页）· 构建脚本 · 安装/卸载 · 托盘                   │
+└──────────────┬───────────────────────────────────────────────┘
+               │ 引用库，不引用任何模块工程
+┌──────────────┴───────────────────────────────────────────────┐
+│ Pcv.Modular.Host      发现 / 校验 / 依赖排序 / 装载 / 启动    │
+│ Pcv.Modular.Packages  .pclpkg 校验与安装（zip-slip 防护）      │
+│ Pcv.Modular.Runtime   进程型框架的宿主端（起进程、协议、窗口）  │
+│ Pcv.Modular.Cli       命令行：列表 / 安装 / 自检               │
+└──────────────┬───────────────────────────────────────────────┘
+               │ 只依赖契约
+┌──────────────┴───────────────────────────────────────────────┐
+│ Pcv.Modular.Abstractions                                     │
+│   IPclModule · IModuleContext · ILogger · IServiceRegistry    │
+│   IEventBus · ISettingsService · IThemeService                │
+│   IMicrosoftAuthService · IFrameworkSurface · ModuleManifest  │
+└──────────────┬───────────────────────────────────────────────┘
+               │ 实现契约（模块之间互不引用程序集）
+┌──────────────┴───────────────────────────────────────────────┐
+│ modules/<id>/  ← 一个 dll + 一份 module.json，装就是放目录     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**关键约束**：壳不引用任何模块工程（`ReferenceOutputAssembly=false`，只保证构建顺序）。
-所以"新增一个模块"不需要改壳的一行代码——把目录丢进 `modules/` 就行。
+**关键约束**：壳对模块工程的引用全是 `ReferenceOutputAssembly="false"`，
+只用来排构建顺序。所以「新增一个模块」不需要改壳的一行代码。
 
 ## 二、加载流程
 
-| 阶段 | 做什么 | 失败时 |
+| 阶段 | 做什么 | 出问题怎么办 |
 | --- | --- | --- |
-| 发现 | 扫 `modules/*/module.json`，解析并校验 | 该模块记失败，其余继续 |
-| 解析 | 依赖拓扑排序（Kahn），同层按 `loadPriority` 再按 Id | 缺依赖 / 成环 → 失败或整组失败 |
-| 加载 | `Assembly.LoadFrom` + 反射建实例 + `OnLoad` | 该模块失败，下游变"已跳过" |
-| 启动 | 按序 `OnStart` | 该模块失败，已启动的不回滚 |
-| 停止 | 逆序 `OnStop` | 记错误，不阻断其它模块 |
+| 发现 | 扫 `modules/*/module.json`，解析并 `Validate()` | 该模块记失败，其余照常 |
+| 去重 | 同一 Id 多个版本时取版本号最高的那个 | — |
+| 排序 | 依赖拓扑（就绪队列），同批按 `loadPriority` 再按 Id | 缺依赖 → 该模块"已跳过"；成环 → 涉及的全部失败 |
+| 装载 | `Assembly.LoadFrom` + 反射建实例 + `OnLoad(context)` | 该模块失败，依赖它的变"已跳过" |
+| 启动 | 按序 `OnStart()` | 该模块失败，已启动的不回滚 |
+| 停止 | 逆序 `OnStop()` | 记错误，不阻断其它模块 |
 
-## 三、仓库边界
+模块通过 `context.Services.Register<T>(impl)` 提供能力，别人用 `TryGet<T>(out var x)` 取。
+**没有 DI 容器**：注册表就是一个类型 → 实例的字典，够用且可预测。
 
-| 仓库 | 内容 | 状态 |
-| --- | --- | --- |
-| `150311-ma/PCL`（fork） | 上游源码 + `modular/` 骨架 | ✅ 加载器/核心/主题/登录可编译 |
-| `PCL.UI.Controls` | `Controls/` 51 文件 | 🚧 源码归位 |
-| `PCL.UI.Launch` | `Pages/PageLaunch` 22 文件 | 🚧 源码归位 |
-| `PCL.UI.Download` | `Pages/PageDownload` 22 文件 | 🚧 源码归位 |
-| `PCL.UI.Instance` | `Pages/PageInstance` 14 文件 | 🚧 源码归位 |
-| `PCL.UI.Setup` | `Pages/PageSetup` 12 文件 | 🚧 源码归位 |
-| `PCL.UI.Link` | `Pages/PageLink` 2 文件 | 🚧 源码归位 |
-| `PCL.UI.Other` | `Pages/PageOther` 10 文件 | 🚧 源码归位 |
+## 三、包格式
 
-"源码归位"= `views/` 与上游逐字一致，`module.json` 与 `MIGRATION.md` 就位，
-但**还没有**做契约适配，因此不产出可编译的 dll。这一步的状态写在各仓库 README 里，
-不靠印象。
-
-## 四、迁移记账
-
-每个 UI 仓库的 `MIGRATION.md` 是由脚本从源码里数出来的，不是手写愿望单：
+`.pclpkg` 就是一个 zip：
 
 ```
-PageLaunchLeft.xaml.vb  837 行  Settings×33、RunInUi×15、FrmMain×11、Hint×2、ThemeUnlock×1
+module.json      清单（id / name / version / kind / assembly|script / entry / category / dependencies）
+Pcv.Xxx.dll      程序集（只复制模块自己的 dll，契约由宿主提供）
 ```
 
-每改完一个文件就从表里删一行；表空了，这个模块才算真正独立。
-重新统计：
+安装 = 解到 `modules/<id>/`，旧目录先备份到 `modules/.backup/<id>-<时间>/`。
+**没有注册表、没有全局状态**：删掉目录就是卸载。
 
-```bash
-python tools/split_ui.py      # 重新生成 ui-repos 下的清单（会覆盖，慎用）
-```
+校验在 `PackageInstaller` 里做，拦截三类：清单不合规、路径越界（zip-slip）、依赖缺失。
+装之前会检查目标是否正在运行——进程型框架在跑时文件被占用，直接覆盖会失败。
 
-## 五、下一步（按依赖顺序，不跳步）
+## 四、两种框架形态
 
-1. `IPathService` / `INotificationService` / `IHostShell` 三个契约补进 Abstractions；
-2. 用它们把 `PCL.UI.Controls` 的 28 个代码文件适配掉（它没有下游，风险最低）；
-3. 再按 Launch → Download → Instance → Setup → Link → Other 的顺序推进；
-4. 每推完一个模块，把 `PCL-repo/Plain Craft Launcher 2/` 里对应的旧文件删掉，
-   避免同一份代码长期两处存在。
-
-## 六、本体与骨架的关系（别搞混）
-
-现在仓库里有两条线，边界必须说清楚，否则迟早有人以为模块已经接管了本体：
-
-| | 本体 `Plain Craft Launcher 2/` | 骨架 `modular/` |
+| | `assembly` | `process` |
 | --- | --- | --- |
-| 状态 | **能编译、能跑**，界面和功能都是它 | 能编译、能跑，但只有壳与三个基础模块 |
-| 编译方式 | `dotnet build`（已翻新为 SDK 风格） | `dotnet build Pcv.sln` |
-| 作用 | 真正给用户用的程序 | 验证模块边界、承载新代码 |
-| 谁依赖谁 | 谁也不依赖谁 | 谁也不依赖谁 |
+| 加载 | 进程内，`Assembly.LoadFrom` | 独立进程，宿主管生命周期 |
+| 界面 | 实现 `IFrameworkSurface`，返回 WPF 控件 | 宿主开一个控制台窗口，收 stdout |
+| 语言 | .NET（C# / VB） | 任意（python / node / exe），通过脚本解释器启 |
+| 隔离 | 同一进程，共享内存 | 独立进程，拿不到宿主对象 |
 
-两个**不共享代码**是有意为之：骨架先把「契约 + 加载器」跑通，本体继续可用。
-等某个模块在骨架里稳定了，再把本体里对应的文件删掉、让本体走加载器取能力——
-顺序反过来（先拆本体）只会得到两个都跑不起来的东西。
+`IFrameworkSurface` 返回 `object` 而不是 `FrameworkElement`，是**故意的**：
+契约程序集不引用 WPF，只做后台清理的框架不该为一个签名拖 WPF 进来。
 
-判断收敛进度的唯一标准：**本体里对应的旧文件被删掉了多少**。数文件，不看感觉。
+## 五、进程协议
 
+宿主 ↔ 框架，stdin/stdout 上一行一条 JSON：
+
+| 方向 | 消息 | 含义 |
+| --- | --- | --- |
+| 下行 | `init` | 初始化：id、数据目录、同僚列表 |
+| 下行 | `stop` | 收尾退出 |
+| 下行 | `call` | 调用另一个框架 |
+| 下行 | `input` | 用户在窗口里敲的一行 |
+| 上行 | `output` | 要显示的一行文本（`[stderr]` 前缀表示错误流） |
+| 上行 | `title` | 改窗口标题 |
+| 上行 | `call` | 请求调用别的框架 |
+| 上行 | `reply` | 回应别人的 `call` |
+| 上行 | `log` | 写进宿主日志 |
+
+任何语言都能实现——不用我们的 SDK，不用特定运行时。`samples/py-demo` 是最小实现。
+
+**编码**：宿主按字节读，UTF-8 严格优先，失败退回系统编码（中文 Windows 上 Java 吐 GBK）。
+这条是踩过坑才加的：之前硬按 UTF-8 解，中文全是 `ʵ�ù���`。
+
+## 六、构建与安装
+
+```
+dotnet build Pcv.sln -c Release
+  → src/*/bin/Release/*.dll
+  → Pcv.Shell 的 ArrangeModules 把 core / theme / login 拷进 bin/Release/modules/
+python tools/build_installer.py
+  → 摆干净目录（不含 logs、PCLData）→ payload.zip → 编 installer → dist/PCV-Setup-x.y.z.exe
+```
+
+安装器把 `payload.zip` 解到目标目录，写一份 `Uninstall.exe`（就是它自己，带 `--uninstall`），
+建快捷方式、写 HKCU 卸载项。装到 `%LOCALAPPDATA%\Programs\PAINCHARNWAV`，不要管理员权限。
+
+## 七、边界（写清楚，免得误会）
+
+- **不是沙箱。** 进程型框架能读你的硬盘、能联网，和你手动跑一个 exe 一样。
+  隔离的只是"拿不到宿主的内存对象"。
+- **不做版本共存。** 同一 Id 只装一份，覆盖安装走备份。
+- **不做热更新。** 覆盖安装已加载的模块，需要重启壳才彻底生效（界面会提示）。
+- **只支持 Windows 10/11。** WPF + .NET Framework 4.8，没有跨平台计划。
+- **模块没有签名校验。** 信任来源靠自己——别装来路不明的包。
+
+## 八、历史
+
+1.0.0 时还有三个从 PCL 改写来的模块（`PCL.Core` / `PCL.Theme` / `PCL.Launch.Microsoft`），
+2.0.0 全部重写为 `Pcv.*`。为什么要重写、当时怎么判断的，记在 [CHANGELOG.md](CHANGELOG.md)。

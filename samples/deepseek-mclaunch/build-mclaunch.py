@@ -3,7 +3,7 @@ import json, os, pathlib, shutil, subprocess, sys, tempfile, zipfile
 PCV_DIR   = r"C:\PCV"
 MODULE_ID = "pcv.mclaunch"
 NAME      = "Minecraft 下载启动框架"
-VERSION   = "2.0.0"
+VERSION   = "2.10.0"
 ASM       = "Pcv.McLaunch"
 ROOT_NS   = "Pcv.McLaunch"
 DEPS      = ["pcv.core"]

@@ -44,7 +44,8 @@ namespace Pcv.Modular.Cli
             var result = installer.Install(packagePath, overwrite);
             Console.WriteLine();
             Console.WriteLine(result.Message);
-            if (result.BackupPath != null) Console.WriteLine("旧版本已备份到：" + result.BackupPath);
+            if (result.BackupPath != null && System.IO.Directory.Exists(result.BackupPath))
+                Console.WriteLine("旧版本已备份到：" + result.BackupPath);
             return result.Success ? 0 : 3;
         }
 

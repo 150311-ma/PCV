@@ -203,6 +203,80 @@ namespace Pcv.Modular.Packages
 
         // ── 安装 ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// 把已解压好的新版本挂到 .pending 下，等下次启动时由 <see cref="ApplyPending"/> 换上。
+        /// 返回挂载后的目录；失败返回 null（调用方会按原异常处理）。
+        /// </summary>
+        private string QueueForNextStart(string staging, string moduleId, PackageInspection inspection, string backup)
+        {
+            try
+            {
+                var pendingRoot = Path.Combine(_modulesDirectory, ".pending");
+                Directory.CreateDirectory(pendingRoot);
+
+                var pending = Path.Combine(pendingRoot, moduleId);
+                if (Directory.Exists(pending)) Directory.Delete(pending, true);
+
+                Directory.Move(staging, pending);
+                _log.Info($"已排队 {moduleId} {inspection.Manifest.Version}，重启后生效");
+                return pending;
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"排队安装 {moduleId} 失败", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 启动时把 .pending 里排队的模块换上。必须在加载器扫目录**之前**调用——
+        /// 那时候还没有任何 dll 被加载，目录随便挪。
+        /// </summary>
+        public static List<string> ApplyPending(string modulesDirectory, Action<string> log = null)
+        {
+            var applied = new List<string>();
+            var pendingRoot = Path.Combine(modulesDirectory, ".pending");
+            if (!Directory.Exists(pendingRoot)) return applied;
+
+            foreach (var directory in Directory.GetDirectories(pendingRoot))
+            {
+                var moduleId = Path.GetFileName(directory);
+                var target = Path.Combine(modulesDirectory, moduleId);
+                try
+                {
+                    if (Directory.Exists(target))
+                    {
+                        // 旧的先挪去 backup，而不是直接删：万一新版本起不来还能手动退回
+                        var backupRoot = Path.Combine(modulesDirectory, ".backup");
+                        Directory.CreateDirectory(backupRoot);
+                        var backup = Path.Combine(backupRoot, moduleId + "-" + DateTime.Now.ToString("yyyyMMddHHmmss"));
+                        try { Directory.Move(target, backup); }
+                        catch (Exception) { Directory.Delete(target, true); }
+                    }
+
+                    Directory.Move(directory, target);
+                    applied.Add(moduleId);
+                    log?.Invoke($"排队的 {moduleId} 已换上新版本");
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"换 {moduleId} 失败，仍留在 .pending：{ex.Message}");
+                }
+            }
+
+            try
+            {
+                if (Directory.Exists(pendingRoot) && !Directory.EnumerateFileSystemEntries(pendingRoot).Any())
+                    Directory.Delete(pendingRoot);
+            }
+            catch
+            {
+                // 删不掉就留着，下次再试
+            }
+
+            return applied;
+        }
+
         public InstallResult Install(string packagePath, bool overwrite = false)
         {
             var inspection = Inspect(packagePath);
@@ -269,22 +343,47 @@ namespace Pcv.Modular.Packages
 
                     Directory.CreateDirectory(backupRoot);
                     backup = Path.Combine(backupRoot, moduleId + "-" + DateTime.Now.ToString("yyyyMMddHHmmss"));
-                    Directory.Move(target, backup);
                 }
 
                 // 提交：同一卷上的目录移动是原子的
-                Directory.Move(staging, target);
-                _log.Info($"已安装框架 {moduleId} {inspection.Manifest.Version}（来源 {Path.GetFileName(packagePath)}）");
-
-                return new InstallResult
+                // 注意"把旧目录挪去备份"也算提交的一部分——dll 被占用时它同样会失败，
+                // 所以这段必须在同一个 try 里，不能只包最后的 Move。
+                try
                 {
-                    Success = true,
-                    Message = $"已安装 {inspection.Manifest.DisplayName} {inspection.Manifest.Version}",
-                    ModuleId = moduleId,
-                    InstalledPath = target,
-                    BackupPath = backup,
-                    Inspection = inspection
-                };
+                    if (backup != null) Directory.Move(target, backup);
+                    Directory.Move(staging, target);
+                    _log.Info($"已安装框架 {moduleId} {inspection.Manifest.Version}（来源 {Path.GetFileName(packagePath)}）");
+
+                    return new InstallResult
+                    {
+                        Success = true,
+                        Message = $"已安装 {inspection.Manifest.DisplayName} {inspection.Manifest.Version}",
+                        ModuleId = moduleId,
+                        InstalledPath = target,
+                        BackupPath = backup,
+                        Inspection = inspection
+                    };
+                }
+                catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException)
+                {
+                    // 目标目录里有正在被加载的 dll（模块在跑），Windows 不给挪。
+                    // 这不是"装不上"，是"现在换不了"——排到下次启动再换，别让用户白试。
+                    _log.Warn($"{moduleId} 正在运行，无法就地替换，改为下次启动生效：{ex.Message}");
+
+                    var queued = QueueForNextStart(staging, moduleId, inspection, backup);
+                    if (queued == null) throw;
+
+                    return new InstallResult
+                    {
+                        Success = true,
+                        Message = $"已排队：{inspection.Manifest.DisplayName} {inspection.Manifest.Version} 将在下次启动时生效",
+                        ModuleId = moduleId,
+                        InstalledPath = queued,
+                        // 这次没真的备份成（旧目录还锁着），别报一个不存在的路径
+                        BackupPath = null,
+                        Inspection = inspection
+                    };
+                }
             }
             catch (Exception ex)
             {
