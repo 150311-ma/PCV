@@ -125,6 +125,11 @@ namespace Pcv.Shell
                 HostVersion = "2.10.0"
             });
 
+            // 受控宿主能力必须在模块 OnLoad 之前注册，否则框架在启动期拿不到。
+            // 窗口要等 Run() 之后才建，所以 HostControl 用延迟绑定：先注册、后 Attach。
+            var hostControl = new HostControl(_host);
+            _host.Services.Register<Pcv.Modular.Contracts.IHostControl>(hostControl);
+
             ModuleLoadReport report;
             try
             {
@@ -177,6 +182,7 @@ namespace Pcv.Shell
 
             var window = new MainWindow(_host, report);
             MainWindow = window;
+            hostControl.Attach(window);
 
             // 给离屏渲染用：--view add 直接停在"加一个包"那一页
             var viewIndex = Array.IndexOf(e.Args, "--view");
@@ -188,7 +194,12 @@ namespace Pcv.Shell
 
             var pageIndex = Array.IndexOf(e.Args, "--page");
             if (pageIndex >= 0 && pageIndex + 1 < e.Args.Length)
-                window.ShowViewForRender(e.Args[pageIndex + 1]);
+            {
+                var page = e.Args[pageIndex + 1];
+                window.ShowViewForRender(page);
+                // 市场页是异步拉的，离屏渲染等不到；这里同步补一次，截图才有真实条目
+                if (page == "market") window.LoadMarketForRender();
+            }
 
             // 离屏渲染：给自动化验证用，不弹窗、不需要人盯着，也能确认界面真的画出来了
             var renderIndex = Array.IndexOf(e.Args, "--render");
@@ -225,13 +236,14 @@ namespace Pcv.Shell
 
             _window = window;
 
-            // 主窗口先建出来（隐藏着也有句柄），然后缩进托盘。
-            // 想直接看主界面就带 --show，调试和截图都靠它。
+            // 启动即显示主界面（默认落在桌面页；初次启动由 MainWindow 停在引导页）。
+            // 以前是"先 Show 再 Hide 缩进托盘"，结果用户以为软件没开。
+            // 想回到后台常驻就带 --tray；--show 保留兼容旧的截图/调试命令。
             window.Show();
             SetupTray();
 
-            var showMain = Array.IndexOf(e.Args, "--show") >= 0;
-            if (!showMain) window.Hide();
+            var trayOnly = Array.IndexOf(e.Args, "--tray") >= 0;
+            if (trayOnly) window.Hide();
 
             AutoStartFrameworks(window);
 
@@ -300,9 +312,9 @@ namespace Pcv.Shell
                     ContextMenuStrip = menu
                 };
                 _tray.DoubleClick += (s, e) => ShowMainWindow();
-                _tray.BalloonTipTitle = "PCV 在后台待着";
-                _tray.BalloonTipText = "双击托盘图标打开主界面；框架各自是独立窗口。";
-                _tray.ShowBalloonTip(3000);
+                _tray.BalloonTipTitle = "PCV 已启动";
+                _tray.BalloonTipText = "主界面已经打开；带 --tray 启动才只留托盘图标。";
+                // 主窗口本来就显示着，启动再弹气泡反而吵，这里不弹。
             }
             catch (Exception ex)
             {

@@ -9,26 +9,37 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Pcv.Modular.Abstractions;
+using Pcv.Modular.Contracts;
 using Pcv.Modular.Host;
 using Pcv.Modular.Packages;
 
 namespace Pcv.Shell
 {
     /// <summary>
-    /// 四页：软件 / 安装 / 框架 / 版权，左侧导航切换。
-    /// 自检在独立窗口里（侧栏底部的「运行一次自检」），不占导航项——
-    /// 它不是一页内容，是一次性的检查结果。
+    /// 六页：桌面 / 安装 / 框架 / 市场 / 版权 / 新手引导，左侧导航切换。
+    /// 自检在独立窗口里（侧栏底部），不占导航项 —— 它是一次性结果，不是一页内容。
+    /// 初次启动会停在引导页；之后一律默认回桌面。
     /// </summary>
     public partial class MainWindow : Window
     {
         private const string DeepSeekUrl = "https://chat.deepseek.com/";
+        private const string OnboardingKey = "OnboardingDone";
 
         private readonly ModuleHost _host;
         private readonly ModuleHostAccessor _accessor;
         private readonly PackageInstaller _installer;
         private readonly ObservableCollection<FrameworkCard> _frameworks = new ObservableCollection<FrameworkCard>();
         private readonly ObservableCollection<FrameworkCard> _software = new ObservableCollection<FrameworkCard>();
+        private readonly ObservableCollection<FrameworkCard> _desktop = new ObservableCollection<FrameworkCard>();
+        private readonly ObservableCollection<MarketCard> _market = new ObservableCollection<MarketCard>();
+        private readonly MarketService _marketService;
+        private readonly ISettingsService _settings;
         private ModuleLoadReport _report;
+        private MarketCatalog _catalog;
+        private bool _marketLoading;
+        private bool _iconsMode = true;
+
+        public ModuleLoadReport CurrentReport => _report;
 
         public MainWindow(ModuleHost host, ModuleLoadReport report)
         {
@@ -38,14 +49,46 @@ namespace Pcv.Shell
 
             _installer = new PackageInstaller(host.ModulesDirectory, host.Log);
             _accessor = new ModuleHostAccessor(host);
+            host.Services.TryGet(out _settings);
+            _marketService = new MarketService(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCLData"));
+
             ListFrameworks.ItemsSource = _frameworks;
             ListSoftware.ItemsSource = _software;
+            GridDesktop.ItemsSource = _desktop;
+            ListMarket.ItemsSource = _market;
             LabVersion.Text = "PCV " + host.Host.Version;
+            LabMarketSource.Text = "服务端：" + MarketService.MarketUrl;
+
             RefreshModules();
-            ShowView("home");
+            ApplyViewMode();
+            ShowView(IsOnboardingDone() ? "home" : "onboarding");
 
             Loaded += (s, e) => GlassHelper.TryEnableRoundedCorners(this);
         }
+
+        // ── 新手引导 ────────────────────────────────────────────────────────
+
+        private bool IsOnboardingDone() => _settings != null && _settings.GetValue(OnboardingKey, false);
+
+        private void MarkOnboardingDone()
+        {
+            if (_settings == null) return;
+            _settings.SetValue(OnboardingKey, true);
+            _settings.Save();
+        }
+
+        private void BtnOnboarding_Click(object sender, RoutedEventArgs e) => ShowView("onboarding");
+
+        private void BtnOnboardingDone_Click(object sender, RoutedEventArgs e)
+        {
+            MarkOnboardingDone();
+            ShowView("home");
+            SetStatus("引导看完了，桌面在这里");
+        }
+
+        /// <summary>给命令行截图用：--page onboarding 会直接停在这页。</summary>
+        public void ForceOnboarding() => ShowView("onboarding");
 
         // ── 列表 ────────────────────────────────────────────────────────────
 
@@ -53,6 +96,7 @@ namespace Pcv.Shell
         {
             _frameworks.Clear();
             _software.Clear();
+            _desktop.Clear();
             PanExtraCategories.Children.Clear();
 
             var loaded = _report.Entries.ToDictionary(e => e.Id, e => e, StringComparer.OrdinalIgnoreCase);
@@ -90,14 +134,23 @@ namespace Pcv.Shell
                     IsBase = isBase,
                     BaseLabel = isBase ? (manifest.BaseFor + " 的基础框架") : "",
                     Category = isSoftware ? "software" : "framework",
-                    CategoryLabel = label
+                    CategoryLabel = label,
+                    Icon = manifest?.Icon,
+                    Accent = manifest?.Accent,
+                    Order = manifest?.Order ?? 100,
+                    Desktop = manifest?.Desktop ?? true
                 };
+
+                // 桌面：所有声明了 desktop 且能打开的东西都上桌，不只软件。
+                // 基础框架是"被用的一方"，摆在桌面上只会让人点开一片空白。
+                if (card.Desktop && card.CanOpen)
+                    _desktop.Add(card);
 
                 if (isSoftware)
                 {
                     _software.Add(card);
                 }
-                else if (!manifest.IsBuiltInCategory)
+                else if (manifest != null && !manifest.IsBuiltInCategory)
                 {
                     // 自定义类别：单独一桶，等下生成分组
                     if (!extras.TryGetValue(label, out var bucket))
@@ -113,15 +166,60 @@ namespace Pcv.Shell
                 }
             }
 
+            // 桌面按清单里的 order 排，其次按名字；新增/卸载后位置稳定
+            var ordered = _desktop.OrderBy(c => c.Order).ThenBy(c => c.Name, StringComparer.CurrentCulture).ToList();
+            _desktop.Clear();
+            foreach (var card in ordered) _desktop.Add(card);
+
             foreach (var pair in extras.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
                 PanExtraCategories.Children.Add(BuildCategoryGroup(pair.Key, pair.Value));
 
             var total = _frameworks.Count + extras.Values.Sum(list => list.Count);
             LabFrameworkTitle.Text = $"共 {total} 个 · 提供能力，被软件调用";
-            LabSoftwareCount.Text = _software.Count + " 个";
-            LabNoSoftware.Visibility = _software.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            LabSoftwareCount.Text = _desktop.Count + " 个应用 · 点图标打开";
+            LabNoSoftware.Visibility = _desktop.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             LabNoFramework.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (_catalog != null) RefreshMarketStates();
         }
+
+        /// <summary>给 IHostControl 用：重新加载模块并刷新所有列表。</summary>
+        public void RefreshFromHost()
+        {
+            _report = _host.ReloadAll();
+            RefreshModules();
+        }
+
+        /// <summary>给 IHostControl 用：在状态栏说一句话。</summary>
+        public void SetHostStatus(string message, bool isError) => SetStatus(message, isError);
+
+        /// <summary>给 IHostControl 用：切页时把窗口带到前面。</summary>
+        public void BringToFront()
+        {
+            if (!IsVisible) Show();
+            if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+            Activate();
+        }
+
+        private void BtnViewMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string mode)
+            {
+                _iconsMode = mode == "icons";
+                ApplyViewMode();
+            }
+        }
+
+        private void ApplyViewMode()
+        {
+            GridDesktop.Visibility = _iconsMode ? Visibility.Visible : Visibility.Collapsed;
+            ListSoftware.Visibility = _iconsMode ? Visibility.Collapsed : Visibility.Visible;
+            var active = new SolidColorBrush(Color.FromRgb(0x13, 0x70, 0xF3));
+            var idle = new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63));
+            BtnViewIcons.Foreground = _iconsMode ? active : idle;
+            BtnViewList.Foreground = _iconsMode ? idle : active;
+        }
+
+        private void BtnOpenMarket_Click(object sender, RoutedEventArgs e) => ShowView("market");
 
         /// <summary>给自定义分类生成一组：小标题 + 卡片列表。</summary>
         private FrameworkElement BuildCategoryGroup(string label, ObservableCollection<FrameworkCard> cards)
@@ -282,14 +380,179 @@ namespace Pcv.Shell
             ViewHome.Visibility = view == "home" ? Visibility.Visible : Visibility.Collapsed;
             ViewAdd.Visibility = view == "install" ? Visibility.Visible : Visibility.Collapsed;
             ViewFrameworks.Visibility = view == "frameworks" ? Visibility.Visible : Visibility.Collapsed;
+            ViewMarket.Visibility = view == "market" ? Visibility.Visible : Visibility.Collapsed;
+            ViewOnboarding.Visibility = view == "onboarding" ? Visibility.Visible : Visibility.Collapsed;
             ViewCredits.Visibility = view == "credits" ? Visibility.Visible : Visibility.Collapsed;
 
             Highlight(NavSoftware, view == "home");
             Highlight(NavInstall, view == "install");
             Highlight(NavFrameworks, view == "frameworks");
+            Highlight(NavMarket, view == "market");
             Highlight(NavCredits, view == "credits");
 
             if (view == "frameworks") RefreshModules();
+            if (view == "market") LoadMarketAsync();
+        }
+
+        // ── 市场 ────────────────────────────────────────────────────────────
+
+        private async void LoadMarketAsync()
+        {
+            if (_marketLoading) return;
+            _marketLoading = true;
+            LabMarketStatus.Text = "正在读取市场…";
+            PanMarketStatus.Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF5, 0xFF));
+            PanMarketStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(0xD7, 0xE3, 0xF4));
+            LabMarketStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63));
+
+            try
+            {
+                var result = await _marketService.LoadAsync(true);
+                ApplyMarketResult(result);
+            }
+            catch (Exception ex)
+            {
+                LabMarketStatus.Text = "读取市场出错：" + ex.Message;
+                SetMarketWarning();
+            }
+            finally
+            {
+                _marketLoading = false;
+            }
+        }
+
+        /// <summary>异步加载与截图用的同步加载共用这一份渲染逻辑。</summary>
+        private void ApplyMarketResult(MarketResult result)
+        {
+            _catalog = result.Catalog;
+            if (!result.Success)
+            {
+                LabMarketStatus.Text = result.Message ?? "市场暂时打不开。";
+                SetMarketWarning();
+                _market.Clear();
+                LabNoMarket.Visibility = Visibility.Visible;
+                SetStatus("市场没读出来：" + result.Message, true);
+                return;
+            }
+
+            var offline = !string.Equals(result.Origin, "线上市场", StringComparison.Ordinal);
+            var extra = string.IsNullOrEmpty(result.Message) ? "" : " · " + result.Message;
+            LabMarketStatus.Text = offline
+                ? $"{result.Origin} · {result.Message} 条目能看，安装要等联网。"
+                : $"线上市场 · {result.Catalog.Items.Count} 个条目 · 更新于 {result.Catalog.Updated}{extra}";
+            if (offline) SetMarketWarning();
+            LabMarketSource.Text = "服务端：" + MarketService.MarketUrl
+                                   + "　|　清单里的 size / sha256 由 tools/build_market.py 现场生成";
+            FillMarket(result.Catalog, result.Origin);
+            SetStatus(offline ? "市场用的是本地内容" : "市场已刷新");
+        }
+
+        /// <summary>给 --render 截图用：同步拉一次，保证拍到真实条目而不是空列表。</summary>
+        public void LoadMarketForRender()
+        {
+            try { ApplyMarketResult(_marketService.LoadForRender()); }
+            catch (Exception ex) { LabMarketStatus.Text = "读取市场出错：" + ex.Message; SetMarketWarning(); }
+        }
+
+        private void SetMarketWarning()
+        {
+            PanMarketStatus.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xF8, 0xEC));
+            PanMarketStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF3, 0xDD, 0xB0));
+            LabMarketStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x8A, 0x5B, 0x00));
+        }
+
+        private void BtnMarketRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            _market.Clear();
+            LoadMarketAsync();
+        }
+
+        private void FillMarket(MarketCatalog catalog, string origin)
+        {
+            _market.Clear();
+            foreach (var item in catalog.Items)
+            {
+                item.Source = origin;
+                item.Offline = !string.Equals(origin, "线上市场", StringComparison.Ordinal);
+                _market.Add(new MarketCard(item));
+            }
+            LabNoMarket.Visibility = _market.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            RefreshMarketStates();
+        }
+
+        /// <summary>按已装版本决定每条显示「安装 / 更新 / 已装」。</summary>
+        private void RefreshMarketStates()
+        {
+            var installed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var module in _installer.ListInstalled())
+                    installed[module.Id] = module.Version ?? "";
+            }
+            catch { /* 读不出来就都当没装 */ }
+
+            foreach (var card in _market)
+            {
+                installed.TryGetValue(card.Id, out var current);
+                card.ApplyInstalled(current);
+            }
+        }
+
+        private async void BtnMarketInstall_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is FrameworkElement element) || !(element.Tag is string id)) return;
+            var card = _market.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (card == null || !card.CanInstall) return;
+            var item = card.Item;
+
+            if (item.Offline)
+            {
+                SetStatus("现在用的是本地清单，联网后再装。点「刷新」重试。", true);
+                return;
+            }
+
+            card.CanInstall = false;
+            card.ActionText = "下载中";
+            SetStatus($"在下载 {item.Name}…");
+
+            try
+            {
+                var package = await _marketService.DownloadAsync(item);
+                var inspection = _installer.Inspect(package);
+                if (!inspection.IsValid)
+                {
+                    SetStatus("包装不了：" + string.Join("；", inspection.Errors.Take(2)), true);
+                    card.ActionText = "重试";
+                    card.CanInstall = true;
+                    return;
+                }
+
+                var target = Path.Combine(_installer.ModulesDirectory, inspection.Manifest.Id);
+                var overwrite = Directory.Exists(target);
+                var result = _installer.Install(package, overwrite);
+                if (!result.Success)
+                {
+                    SetStatus(result.Message, true);
+                    card.ActionText = "重试";
+                    card.CanInstall = true;
+                    return;
+                }
+
+                _report = _host.ReloadAll();
+                RefreshModules();
+                SetStatus($"{item.Name} 装好了，桌面上多了个图标");
+            }
+            catch (Exception ex)
+            {
+                SetStatus("安装失败：" + ex.Message, true);
+                card.ActionText = "重试";
+                card.CanInstall = true;
+            }
+            finally
+            {
+                try { System.IO.File.Delete(Path.Combine(Path.GetTempPath(), "pcv-market", item.File)); }
+                catch { /* 临时文件删不掉不影响 */ }
+            }
         }
 
         private static void Highlight(System.Windows.Controls.Button button, bool selected)
@@ -669,7 +932,61 @@ namespace Pcv.Shell
             public string BaseLabel { get; set; } = "";
             public string Category { get; set; } = "framework";
             public string CategoryLabel { get; set; } = "框架";
+            public string Icon { get; set; }
+            public string Accent { get; set; }
+            public int Order { get; set; } = 100;
+            public bool Desktop { get; set; } = true;
             public Visibility BaseVisibility => IsBase ? Visibility.Visible : Visibility.Collapsed;
+
+            /// <summary>桌面图标上的一个字：清单里写了就用，否则取名字首字。</summary>
+            public string IconText => string.IsNullOrWhiteSpace(Icon)
+                ? (string.IsNullOrEmpty(Name) ? "P" : Name.Substring(0, 1))
+                : Icon.Trim();
+
+            /// <summary>
+            /// 图标底色：清单给了 accent 就用，没给就按 id 哈希生成。
+            /// 同一个模块每次启动颜色都一样，这是「看起来像真的桌面」的关键。
+            /// </summary>
+            public System.Windows.Media.Brush AccentBrush
+            {
+                get
+                {
+                    var color = ParseColor(Accent);
+                    if (color == null)
+                    {
+                        var palette = new[]
+                        {
+                            System.Windows.Media.Color.FromRgb(0x13, 0x70, 0xF3),
+                            System.Windows.Media.Color.FromRgb(0x7A, 0x5A, 0xF8),
+                            System.Windows.Media.Color.FromRgb(0x0E, 0x9F, 0x6E),
+                            System.Windows.Media.Color.FromRgb(0xF2, 0x7A, 0x54),
+                            System.Windows.Media.Color.FromRgb(0x1C, 0x9C, 0xC4),
+                            System.Windows.Media.Color.FromRgb(0xD6, 0x4B, 0x8B)
+                        };
+                        var hash = 0;
+                        foreach (var c in Id ?? Name ?? "") hash = (hash * 31 + c) & 0x7FFFFFFF;
+                        color = palette[hash % palette.Length];
+                    }
+                    var brush = new System.Windows.Media.LinearGradientBrush(
+                        Lighten(color.Value, 0.12), color.Value,
+                        new System.Windows.Point(0, 0), new System.Windows.Point(1, 1));
+                    brush.Freeze();
+                    return brush;
+                }
+            }
+
+            internal static System.Windows.Media.Color? ParseColor(string text)
+            {
+                if (string.IsNullOrWhiteSpace(text)) return null;
+                try { return (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(text.Trim()); }
+                catch { return null; }
+            }
+
+            private static System.Windows.Media.Color Lighten(System.Windows.Media.Color c, double amount)
+                => System.Windows.Media.Color.FromRgb(
+                    (byte)(c.R + (255 - c.R) * amount),
+                    (byte)(c.G + (255 - c.G) * amount),
+                    (byte)(c.B + (255 - c.B) * amount));
 
             /// <summary>状态胶囊的底色/字色：跑着的是绿，没跑的是灰，出错的是红。</summary>
             public System.Windows.Media.Brush StatePill => StateBrush(true);
@@ -693,6 +1010,70 @@ namespace Pcv.Shell
                 brush.Freeze();
                 return brush;
             }
+        }
+
+        /// <summary>市场卡片的可绑定包装：数据来自清单，状态来自本机已装模块。</summary>
+        public sealed class MarketCard : System.ComponentModel.INotifyPropertyChanged
+        {
+            private string _action = "安装";
+            private bool _canInstall = true;
+
+            public MarketCard(MarketItem item) { Item = item; }
+
+            public MarketItem Item { get; }
+            public string Id => Item.Id;
+            public string Name => Item.Name;
+            public string Version => Item.Version;
+            public string Summary => Item.Summary;
+            public string Category => Item.Category;
+            public string IconText => Item.IconText;
+            public bool Offline => Item.Offline;
+            public Visibility OfficialVisibility => Item.Official ? Visibility.Visible : Visibility.Collapsed;
+            public string SourceLine => (Item.Source ?? "") + (string.IsNullOrEmpty(Item.SizeText) ? "" : "  ·  " + Item.SizeText);
+
+            public System.Windows.Media.Brush AccentBrush
+            {
+                get
+                {
+                    var color = FrameworkCard.ParseColor(Item.Accent)
+                                ?? System.Windows.Media.Color.FromRgb(0x13, 0x70, 0xF3);
+                    var brush = new System.Windows.Media.SolidColorBrush(color);
+                    brush.Freeze();
+                    return brush;
+                }
+            }
+
+            public string ActionText
+            {
+                get => _action;
+                set { _action = value; Changed("ActionText"); }
+            }
+
+            public bool CanInstall
+            {
+                get => _canInstall;
+                set { _canInstall = value; Changed("CanInstall"); }
+            }
+
+            /// <summary>已装版本与清单版本比较，决定按钮文案。</summary>
+            public void ApplyInstalled(string current)
+            {
+                if (string.IsNullOrEmpty(current)) { ActionText = "安装"; CanInstall = true; return; }
+                if (IsNewer(Item.Version, current)) { ActionText = "更新"; CanInstall = true; return; }
+                ActionText = "已装";
+                CanInstall = false;
+            }
+
+            private static bool IsNewer(string candidate, string current)
+            {
+                if (!System.Version.TryParse((candidate ?? "").Split('-')[0], out var a)) return false;
+                if (!System.Version.TryParse((current ?? "").Split('-')[0], out var b)) return true;
+                return a > b;
+            }
+
+            public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+            private void Changed(string name) => PropertyChanged?.Invoke(this,
+                new System.ComponentModel.PropertyChangedEventArgs(name));
         }
     }
 }

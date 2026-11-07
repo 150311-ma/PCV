@@ -38,18 +38,67 @@ PCV-Setup-2.10.0.exe --silent --dir D:\Apps\PCV
 
 ```bat
 dotnet build Pcv.sln -c Release
-python tools/check_repo.py           :: 仓库体检：版本号、文档引用、模块清单
+python tools/build_market.py         :: 生成市场清单（dist 里的包当真相源）
+python tools/check_repo.py           :: 仓库体检：版本号、文档引用、模块清单、市场清单
 python tools/check_repo.py --inject-fault   :: 确认体检器自己没瞎
 ```
 
-## 界面：四页
+> 构建前先跑 `build_market.py`：壳工程会把 `market/index.json` 内嵌成断网兜底清单，
+> 文件不存在时编译会直接失败（而不是装到用户机器上才发现没内容）。
+
+## 界面：六页
 
 | 页 | 管什么 |
 | --- | --- |
-| **软件** | 已安装的软件。软件自己不含框架，能力向框架要 |
-| **安装** | 三条路：拖包 / 挑文件 / 粘一段 AI 输出 |
+| **桌面** | 已安装的应用，圆角图标网格，点一下打开；可切成列表视图卸载 |
+| **安装** | 四条路：市场 / 拖包 / 挑文件 / 粘一段 AI 输出 |
 | **框架** | 所有框架，按类别分组；基础框架带标记且不给「打开」 |
+| **市场** | 官方做好的包，点一下下载、校验、装到桌面 |
 | **版权** | 声明基于 PCL、上游作者署名与赞助链接、许可摘要 |
+| **新手引导** | 初次启动自动停在这页，讲清软件 / 框架 / 怎么装；之后默认回桌面 |
+
+启动即显示主窗口（默认落在桌面页）；想让它只留托盘图标后台跑，加 `--tray`。
+初次启动会自动进新手引导，点「开始使用」记下状态，以后不再弹；
+侧栏的「新手引导」随时能重看。
+
+## 市场：博客当服务端
+
+PCV 从 `https://cyan-blog-2fk.pages.dev/market/index.json` 拉清单，包是同目录下的
+静态 `.pclpkg`。没有账号系统、没有数据库、没有上传接口 —— 就是几个静态文件，
+符合「市场不要做太大」的口径。
+
+清单真相源是 [`market/catalog.json`](market/catalog.json)，`size` / `sha256` / `version`
+由 `tools/build_market.py` 现场从 `dist/` 算出来，不手抄。上架流程见
+[market/README.md](market/README.md)。
+
+客户端的安全与可用性处理：
+
+- 下载完先比 `size` 与 `sha256`，再交给安装器查路径越界、id、依赖、宿主版本；
+- 清单里的 `file` 只接受纯文件名，拼不出任意 URL；
+- 断网时退到「本地缓存 → 程序集内置清单」；离线时能看条目，安装会提示联网后再试；
+- 本机到 Cloudflare 这段偶发返回截断正文（HTTP 200 但只有几百字节），
+  所以清单和包都按「必须完整解析 / 校验通过」判定并重试 3 次。
+
+<p align="center">
+  <img src="docs/screenshots/market.png" width="700" alt="市场页">
+</p>
+
+## 框架能用的宿主能力（`IHostControl`）
+
+框架以前只能被宿主调用；现在可以通过 `context.Services.TryGet(out IHostControl host)`
+请求宿主做事，能力列在
+[`src/Pcv.Modular.Abstractions/Contracts.cs`](src/Pcv.Modular.Abstractions/Contracts.cs)：
+
+| 能力 | 说明 |
+| --- | --- |
+| `Modules` | 已装模块的只读快照（纯数据 DTO，不是 `ModuleEntry`） |
+| `Navigate` / `OpenModule` / `RefreshModules` | 切页、打开模块、重扫列表 |
+| `InstallPackage` / `UninstallModule` | 装包仍走完整校验，基础模块卸载会被拒 |
+| `Notify` / `CopyText` / `OpenUrl` | 状态栏、剪贴板、外部链接 |
+| `HostChanged` | 模块列表或当前页面变化通知 |
+
+**边界**：框架拿到的是接口，不是 WPF 窗口对象，改不了标题、遍历不了视觉树、
+碰不到宿主私有字段。官方包 `pcv.official.dock`（快捷面板）就是这份能力的可执行说明。
 
 ## 概念：软件 与 框架
 
@@ -70,11 +119,12 @@ python tools/check_repo.py --inject-fault   :: 确认体检器自己没瞎
 > ⚠️ **进程型框架不是沙箱。** 它拿不到宿主的内存对象，但文件系统层面和你是同一个用户权限。
 > 别装来路不明的包——详见 [OPEN-SOURCE.md](OPEN-SOURCE.md)。
 
-## 装东西的三条路
+## 装东西的四条路
 
-1. **拖 `.pclpkg` 进来** —— 直接装。
-2. **挑一个文件** —— 同上，走文件选择框。
-3. **粘一段 AI 输出** —— 把 DeepSeek 给的构建脚本贴进来，点「构建并安装」：
+1. **去市场挑** —— 官方做好的包，点一下自动下载、校验、安装，桌面上多个图标。
+2. **拖 `.pclpkg` 进来** —— 直接装。
+3. **挑一个文件** —— 同上，走文件选择框。
+4. **粘一段 AI 输出** —— 把 DeepSeek 给的构建脚本贴进来，点「构建并安装」：
    在隔离目录里跑完，产物自动装上，不用点第二次。带 markdown 围栏的也认（```` ```python ```` 会自动剥掉）。
 
 ## 一键自检
@@ -132,9 +182,10 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 
 | 目录 | 是什么 | 详细 |
 | --- | --- | --- |
-| `src/` | 十三个工程，分四层：壳 / 加载与包管理 / 契约 / 模块 | [src/README.md](src/README.md) |
+| `src/` | 十六个工程，分四层：壳 / 加载与包管理 / 契约 / 模块 | [src/README.md](src/README.md) |
 | `installer/` | 单文件安装器（自解压 + 快捷方式 + 卸载项） | [installer/README.md](installer/README.md) |
-| `tools/` | 打包、打安装包、生成宣传片与配音 | [tools/README.md](tools/README.md) |
+| `market/` | 市场清单的真相源与生成产物（服务端在博客） | [market/README.md](market/README.md) |
+| `tools/` | 打包、打安装包、生成市场清单、生成宣传片与配音 | [tools/README.md](tools/README.md) |
 | `samples/` | 五个示例：进程框架、软件、MC 启动、构建脚本、AI 生成脚本 | [samples/README.md](samples/README.md) |
 | `assets/` | 图标 + 给 AI 的提示词 | [assets/README.md](assets/README.md) |
 | `dist/` | 打包产物（安装包与 `.pclpkg`），**生成物，勿手改** | [dist/README.md](dist/README.md) |
@@ -174,14 +225,17 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 
 | 想干什么 | 命令 |
 | --- | --- |
-| 构建 | `dotnet build Pcv.sln -c Release` |
-| 仓库体检（版本 / 文档 / 清单） | `python tools/check_repo.py` |
+| 构建 | `python tools/build_market.py`，再 `dotnet build Pcv.sln -c Release` |
+| 仓库体检（版本 / 文档 / 清单 / 市场） | `python tools/check_repo.py` |
 | 体检器自检（注入已知故障） | `python tools/check_repo.py --inject-fault` |
+| 生成市场清单并自校验 | `python tools/build_market.py` |
+| 市场清单校验器自检 | `python tools/build_market.py --inject-fault` |
+| 同步市场到博客三处 | `python tools/build_market.py --blog <博客根目录>` |
 | 打一个模块包 | `python tools/pack_module.py <目录> <输出.pclpkg>` |
 | 打安装程序 | `python tools/build_installer.py` |
 | 自检（模块图是否健康） | `Pcv.Modular.Cli.exe --modules <目录>` |
-| 离屏渲染某页（截图用） | `PCV.exe --render out.png --page credits` |
-| 显示主窗口（平时缩在托盘） | `PCV.exe --show` |
+| 离屏渲染某页（截图用） | `PCV.exe --render out.png --page market` |
+| 只留托盘图标、后台启动 | `PCV.exe --tray` |
 | 打开自检窗口 | `PCV.exe --selfcheck` |
 | 直接打开某个框架 | `PCV.exe --open pcv.theme` |
 | 构建脚本并自动安装 | `PCV.exe --build 脚本.py` |
