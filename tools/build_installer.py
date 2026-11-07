@@ -32,14 +32,14 @@ DIST = MODULAR / "dist"
 
 # 默认随安装包带上的框架包（成品 .pclpkg）
 PACKAGES = [
-    "Pcv.Diagnostics-2.10.0.pclpkg",
-    "Pcv.Stat-2.10.0.pclpkg",
-    "Pcv.Cleaner-2.10.0.pclpkg",
-    "Pcv.Demo.Hello-2.10.0.pclpkg",
-    "pcv.py.demo-2.10.0.pclpkg",
-    "pcv.app.demo-2.10.0.pclpkg",
-    "pcv.mc.launcher-2.10.0.pclpkg",
-    "pcv.rel.demo-2.10.0.pclpkg",
+    "Pcv.Diagnostics-3.0.0.pclpkg",
+    "Pcv.Stat-3.0.0.pclpkg",
+    "Pcv.Cleaner-3.0.0.pclpkg",
+    "Pcv.Demo.Hello-3.0.0.pclpkg",
+    "pcv.py.demo-3.0.0.pclpkg",
+    "pcv.app.demo-3.0.0.pclpkg",
+    "pcv.mc.launcher-3.0.0.pclpkg",
+    "pcv.rel.demo-3.0.0.pclpkg",
 ]
 
 # 安装目录里不该出现的东西
@@ -121,7 +121,7 @@ def build_setup():
         sys.exit(1)
 
     DIST.mkdir(parents=True, exist_ok=True)
-    output = DIST / "PCV-Setup-2.10.0.exe"
+    output = DIST / "PCV-Setup-3.0.0.exe"
     shutil.copy2(produced, output)
     return output
 

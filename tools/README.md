@@ -5,7 +5,7 @@
 
 | 脚本 | 干什么 | 典型用法 |
 | --- | --- | --- |
-| `pack_module.py` | 把模块目录打成 `.pclpkg` | `python tools/pack_module.py src/Pcv.Stat/bin/Release dist/Pcv.Stat-2.10.0.pclpkg` |
+| `pack_module.py` | 把模块目录打成 `.pclpkg` | `python tools/pack_module.py src/Pcv.Stat/bin/Release dist/Pcv.Stat-3.0.0.pclpkg` |
 | `build_installer.py` | 构建整个方案 → 摆干净目录 → 打 payload → 编安装器 | `python tools/build_installer.py` |
 | `make_promo.py` | 用真实截图合成宣传片（静音） | `python tools/make_promo.py` |
 | `make_narrated.py` | 加旁白（edge-tts）和原创配乐，出有声版 | `python tools/make_narrated.py` |

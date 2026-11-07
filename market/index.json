@@ -6,7 +6,7 @@
     {
       "id": "pcv.official.guide",
       "name": "官方入门指南",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "一张卡片讲清软件、框架、市场分别是什么，第一次用先看它。",
       "category": "工具",
@@ -17,14 +17,14 @@
         "官方",
         "入门"
       ],
-      "file": "pcv.official.guide-2.10.0.pclpkg",
-      "size": 4935,
-      "sha256": "f5e0c9e051c4429f33d1eab784080204ff8dd9524eb5a5722cc2fbf122b76f10"
+      "file": "pcv.official.guide-3.0.0.pclpkg",
+      "size": 4936,
+      "sha256": "f2011e377c0e03af9c4e9a2bf969d19bc0ccff5e6c510fd1abbfb9f745d93487"
     },
     {
       "id": "pcv.official.notes",
       "name": "随手记",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "一张随手写的便签，存在自己模块的目录里，重启还在。",
       "category": "工具",
@@ -35,14 +35,14 @@
         "官方",
         "工具"
       ],
-      "file": "pcv.official.notes-2.10.0.pclpkg",
-      "size": 4163,
-      "sha256": "2fc825547d27ec59815e0789089178a5acf16403c8715e2da186efa6d7d3aca3"
+      "file": "pcv.official.notes-3.0.0.pclpkg",
+      "size": 4164,
+      "sha256": "c4334594ae9a32f17cc73a76a0e799fba11722838fd38158d2b28178e748bbc0"
     },
     {
       "id": "pcv.official.dock",
       "name": "快捷面板",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "读出宿主装了哪些模块，点一下就打开。框架权限的可执行说明。",
       "category": "工具",
@@ -53,14 +53,14 @@
         "官方",
         "工具"
       ],
-      "file": "pcv.official.dock-2.10.0.pclpkg",
-      "size": 4871,
-      "sha256": "21beef67d484cedbcf632b78ad6b9fae39ff7ab3a7be071c1328dc91d0d00db2"
+      "file": "pcv.official.dock-3.0.0.pclpkg",
+      "size": 4873,
+      "sha256": "c4a3217f8c3ecc1fc7b151ea6b1691da42e018d64ef5d218e6fdda6d13e56d27"
     },
     {
       "id": "pcv.stat",
       "name": "使用统计",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "记打开次数、起始日期、累计时长。只存在本地，不联网。",
       "category": "框架",
@@ -71,14 +71,14 @@
         "官方",
         "统计"
       ],
-      "file": "Pcv.Stat-2.10.0.pclpkg",
-      "size": 5113,
-      "sha256": "1d8c6e88309eb7bce259a87fe4c5893ec8bde683921b3f40e69def5460c76308"
+      "file": "Pcv.Stat-3.0.0.pclpkg",
+      "size": 5118,
+      "sha256": "23ab2469d322c5bdb4047ced7095e36cc7dbd20919fa5f01fa382002b22357d0"
     },
     {
       "id": "pcv.cleaner",
       "name": "垃圾清理",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "清掉过期的备份和两周前的日志，每删一项都写进日志。",
       "category": "框架",
@@ -89,14 +89,14 @@
         "官方",
         "维护"
       ],
-      "file": "Pcv.Cleaner-2.10.0.pclpkg",
-      "size": 5995,
-      "sha256": "e2dc94ae36dbb5373bbb092c099f6b105f82aee8682dd568fd451ca14c686428"
+      "file": "Pcv.Cleaner-3.0.0.pclpkg",
+      "size": 5992,
+      "sha256": "8cbb21fcd6ca61aec75e88696c67f5a455a5848259ab92a39a4a8064dc3d738b"
     },
     {
       "id": "pcv.diagnostics",
       "name": "环境自检",
-      "version": "2.10.0",
+      "version": "3.0.0",
       "author": "150311-ma",
       "summary": "看一眼宿主、模块目录和运行时版本对不对。",
       "category": "框架",
@@ -107,9 +107,9 @@
         "官方",
         "诊断"
       ],
-      "file": "Pcv.Diagnostics-2.10.0.pclpkg",
-      "size": 6361,
-      "sha256": "0a0d4c3101782b2a129e1a2f4423619a3eb65e60f50bd06da9be4fee4233c649"
+      "file": "Pcv.Diagnostics-3.0.0.pclpkg",
+      "size": 6358,
+      "sha256": "27d2a01e9e5377f77320c6058052959d7ed86738438d4b2c995f44133588e4e7"
     }
   ]
 }

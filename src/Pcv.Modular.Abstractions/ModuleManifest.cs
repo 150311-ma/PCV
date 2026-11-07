@@ -141,7 +141,7 @@ namespace Pcv.Modular.Abstractions
         }
 
         /// <summary>由加载器注入，用于 MinHostVersion 校验。</summary>
-        public static string HostInfoVersion { get; set; } = "2.10.0";
+        public static string HostInfoVersion { get; set; } = "3.0.0";
 
         private static bool IsVersionAtLeast(string current, string required)
         {

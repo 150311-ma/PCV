@@ -15,7 +15,7 @@ namespace Pcv.Modular.Host
         public string LogFile { get; set; }
         public bool EchoToConsole { get; set; } = true;
         public string HostName { get; set; } = "PCV Modular Host";
-        public string HostVersion { get; set; } = "2.10.0";
+        public string HostVersion { get; set; } = "3.0.0";
     }
 
     /// <summary>运行时的一个模块实例，记录状态、耗时与失败原因。</summary>

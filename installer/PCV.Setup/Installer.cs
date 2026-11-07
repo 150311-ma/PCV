@@ -21,7 +21,7 @@ namespace PCV.Setup
     public static class Installer
     {
         public const string AppName = "PAINCHARNWAV";
-        public const string Version = "2.10.0";
+        public const string Version = "3.0.0";
         public const string ExeName = "PCV.exe";
 
         public static string DefaultTarget => Path.Combine(
