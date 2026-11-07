@@ -5,7 +5,7 @@
 
 ## 四条硬规矩
 
-1. **每次更新：先 Issue → 再 PR → `pr-guard` 变绿 → 合并。**
+1. **每次更新：先 Issue → 再 PR → 两个闸门全绿 → 合并。**
    不直接往 `main` 推。没有「就改个错别字，不用开 Issue」这种例外，闸门也没有豁免标签。
 2. **一份事实只写一遍。** 许可文本在 `LICENSE`，来源在 `NOTICE.md`，能做什么在 `OPEN-SOURCE.md`，
    版本历史在 `CHANGELOG.md`。别处引用，不要复制粘贴。
@@ -21,18 +21,19 @@
 2. 建分支            git checkout -b fix/xxx
 3. 改 + 自测         dotnet build Pcv.sln -c Release
 4. 开 PR             正文写一行 Closes #<Issue 编号>，标题 <类型>: <一句话>
-5. 等 pr-guard       四项检查全绿才能合并
+5. 等两个闸门       pr-guard 与 repo-check 全绿才能合并
 6. squash 合并       Issue 会被 Closes #N 自动关掉，源分支随之删除
 ```
 
-`pr-guard`（`.github/workflows/pr-guard.yml`）是 `main` 的**必需状态检查**，检查四件事：
+`main` 上有**两个必需状态检查**，分工不同，少一个都合并不了：
 
-| 检查 | 不合格会怎样 |
-| --- | --- |
-| 正文有 `Closes #N` / `Refs #N` | 直接报红，合并不了 |
-| `#N` 是真实存在、且不是 PR 的 Issue | 编的号 / 填成 PR 号也报红 |
-| 标题以 `fix:` / `feat:` / `docs:` / `refactor:` / `chore:` / `test:` / `build:` 开头 | 报红 |
-| 标题 1–60 字 | 报红 |
+| 检查 | 管什么 | 不合格会怎样 |
+| --- | --- | --- |
+| `pr-guard` | 流程：正文有 `Closes #N` 且编号是真实 Issue、标题有类型前缀、标题 1–60 字 | 报红 |
+| `repo-check` | 内容：`tools/check_repo.py` 查版本一致性 / 文档引用 / 清单 / 单一真相源 / 源码卫生，并用 `--inject-fault` 自检 | 报红 |
+
+`repo-check` 只用标准库，Linux CI 上也能跑——它不编译 .NET，查的是那些
+「不会让构建失败、但会让下一个人照着过期说明做事」的东西。
 
 开发机上有一条龙脚本，会自动建 Issue、把 `Closes #N` 补进 PR 正文、等检查、再合并；
 也可以按上面的步骤手工做。脚本依赖本机的 GitHub 凭据，不随仓库分发，所以不在 `tools/` 里。
@@ -58,7 +59,8 @@ git checkout -b fix/install-while-running
 
 # 改完之后
 dotnet build Pcv.sln -c Release
-python tools/deploy_desktop.py     # 顺手跑模块自检
+python tools/check_repo.py          # 仓库体检：版本、文档引用、清单
+python tools/check_repo.py --inject-fault
 
 git commit -am "fix: 运行中覆盖安装改为排队"
 git push origin fix/install-while-running

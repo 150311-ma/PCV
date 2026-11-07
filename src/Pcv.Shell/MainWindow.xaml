@@ -160,34 +160,6 @@
             </Setter>
         </Style>
 
-        <!-- 细滚动条：默认那根太粗，和这套界面不搭 -->
-        <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid Background="Transparent">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#C9D5E6" CornerRadius="4" Width="6"
-                                                        HorizontalAlignment="Center" Margin="1,3" />
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
-
         <Style x:Key="Card" TargetType="Border">
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="#E6EDF7" />
@@ -379,6 +351,18 @@
                         </Button>
 
                         <Border Height="1" Background="#EDF2FA" Margin="20,14,20,14" />
+
+                        <Button Style="{StaticResource GhostButton}" Margin="16,0,16,12"
+                                HorizontalAlignment="Stretch" Click="BtnSelfCheck_Click"
+                                ToolTip="装不上东西时点这里，看看是哪一步出的问题">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M2,8 L6,12 L14,3" Stroke="#4A5563" StrokeThickness="1.7"
+                                      Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" />
+                                <TextBlock Text="运行一次自检" Margin="9,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
 
                         <TextBlock Text="拖 .pclpkg 到窗口就能装"
                                    FontSize="11" Foreground="#9AA4B2" TextWrapping="Wrap"

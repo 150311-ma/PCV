@@ -25,20 +25,21 @@ PCV 反过来：**壳只负责装、管、开**，每个能力是独立的一个
 
 ## 快速开始
 
-**安装**：下载 [`PCV-Setup-2.0.0.exe`](https://github.com/150311-ma/PCV/releases/latest)，双击。
+**安装**：下载 [`PCV-Setup-2.10.0.exe`](https://github.com/150311-ma/PCV/releases/latest)，双击。
 装在 `%LOCALAPPDATA%\Programs\PAINCHARNWAV`，不需要管理员权限，桌面和开始菜单会有快捷方式。
 
 静默安装（批量部署用）：
 
 ```bat
-PCV-Setup-2.0.0.exe --silent --dir D:\Apps\PCV
+PCV-Setup-2.10.0.exe --silent --dir D:\Apps\PCV
 ```
 
 **从源码构建**：
 
 ```bat
 dotnet build Pcv.sln -c Release
-python tools/deploy_desktop.py      :: 部署到桌面那份，顺手跑一遍模块自检
+python tools/check_repo.py           :: 仓库体检：版本号、文档引用、模块清单
+python tools/check_repo.py --inject-fault   :: 确认体检器自己没瞎
 ```
 
 ## 界面：四页
@@ -75,6 +76,29 @@ python tools/deploy_desktop.py      :: 部署到桌面那份，顺手跑一遍�
 2. **挑一个文件** —— 同上，走文件选择框。
 3. **粘一段 AI 输出** —— 把 DeepSeek 给的构建脚本贴进来，点「构建并安装」：
    在隔离目录里跑完，产物自动装上，不用点第二次。带 markdown 围栏的也认（```` ```python ```` 会自动剥掉）。
+
+## 一键自检
+
+装不上、装完打不开的时候，不用去翻文件夹：点左侧栏底部的 **「运行一次自检」**。
+
+<p align="center">
+  <img src="docs/screenshots/selfcheck.png" width="620" alt="自检窗口">
+</p>
+
+它查 9 项：模块图（启动时那次加载的结果）、`module.json` 能不能解析、入口文件在不在、
+依赖关系、目录名与 id 是否一致、有没有排队等下次启动的更新、最近日志里的报错、
+模块目录能不能写、契约 dll 在不在。结果分「通过 / 注意 / 失败」三档，
+点「复制报告」就能整份贴进 Issue，不用手抄。
+
+命令行也能开同一个窗口；配 `--render` 可以离屏出图，用来做自动化验证：
+
+```bat
+PCV.exe --selfcheck
+PCV.exe --selfcheck --render selfcheck.png
+```
+
+> 自检里的模块图是**启动时那次的快照**，不会为了「刷新」把模块再启动一遍。
+> 想验证「加载器本身能不能识别坏模块」，用 `Pcv.Modular.Cli.exe --inject-fault`——那另一个用途。
 
 ## 自己做一个包
 
@@ -132,28 +156,33 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 
 | Id | 名称 | 版本 | 类别 |
 | --- | --- | --- | --- |
-| `pcv.core` | 基础模块 | 2.0.0 | framework |
-| `pcv.theme` | 主题 | 2.0.0 | framework |
-| `pcv.launch.microsoft` | 微软登录 | 2.0.0 | framework |
-| `pcv.diagnostics` | 环境自检 | 2.0.0 | framework |
-| `pcv.stat` | 使用统计（仅本地） | 2.0.0 | framework |
-| `pcv.cleaner` | 垃圾清理 | 2.0.0 | framework |
-| `pcv.demo.hello` | 示例框架 | 2.0.0 | framework |
-| `pcv.py.demo` | Python 示例框架 | 2.0.0 | framework |
-| `pcv.app.demo` | 示例软件 | 2.0.0 | software |
-| `pcv.mc.launcher` | Minecraft 启动 | 2.0.0 | 游戏 |
+| `pcv.core` | 基础模块 | 2.10.0 | framework |
+| `pcv.theme` | 主题 | 2.10.0 | framework |
+| `pcv.launch.microsoft` | 微软登录 | 2.10.0 | framework |
+| `pcv.diagnostics` | 环境自检 | 2.10.0 | framework |
+| `pcv.stat` | 使用统计（仅本地） | 2.10.0 | framework |
+| `pcv.cleaner` | 垃圾清理 | 2.10.0 | framework |
+| `pcv.demo.hello` | 示例框架 | 2.10.0 | framework |
+| `pcv.py.demo` | Python 示例框架 | 2.10.0 | framework |
+| `pcv.app.demo` | 示例软件 | 2.10.0 | software |
+| `pcv.mc.launcher` | Minecraft 启动 | 2.10.0 | 游戏 |
+| `pcv.rel.demo` | 相对路径示例 | 2.10.0 | framework |
+
+这张表的 Id 必须和 `tools/build_installer.py` 的 `PACKAGES` 对得上——`tools/check_repo.py` 会查。
 
 ## 开发
 
 | 想干什么 | 命令 |
 | --- | --- |
 | 构建 | `dotnet build Pcv.sln -c Release` |
-| 部署到桌面那份 | `python tools/deploy_desktop.py` |
+| 仓库体检（版本 / 文档 / 清单） | `python tools/check_repo.py` |
+| 体检器自检（注入已知故障） | `python tools/check_repo.py --inject-fault` |
 | 打一个模块包 | `python tools/pack_module.py <目录> <输出.pclpkg>` |
 | 打安装程序 | `python tools/build_installer.py` |
 | 自检（模块图是否健康） | `Pcv.Modular.Cli.exe --modules <目录>` |
 | 离屏渲染某页（截图用） | `PCV.exe --render out.png --page credits` |
 | 显示主窗口（平时缩在托盘） | `PCV.exe --show` |
+| 打开自检窗口 | `PCV.exe --selfcheck` |
 | 直接打开某个框架 | `PCV.exe --open pcv.theme` |
 | 构建脚本并自动安装 | `PCV.exe --build 脚本.py` |
 | 重出宣传片 / 配音版 | `python tools/make_promo.py`，再 `python tools/make_narrated.py` |

@@ -18,5 +18,34 @@
         <SolidColorBrush x:Key="ColorBrushGray6" Color="#EBEBEB" />
         <SolidColorBrush x:Key="ColorBrushGray7" Color="#F0F0F0" />
         <SolidColorBrush x:Key="ColorBrushGray8" Color="#F5F5F5" />
+
+        <!-- 细滚动条：全局只放一份，主窗口和自检窗口共用。
+             放在 Window.Resources 里的话，第二个窗口就得再抄一遍。 -->
+        <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#C9D5E6" CornerRadius="4" Width="6"
+                                                        HorizontalAlignment="Center" Margin="1,3" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
     </Application.Resources>
 </Application>

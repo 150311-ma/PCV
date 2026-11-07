@@ -10,7 +10,7 @@ using Pcv.Modular.Abstractions;
 namespace Pcv.Modular.Host
 {
     /// <summary>
-    /// PCL 模块加载器。
+    /// PCV 模块加载器。
     ///
     /// 职责边界（刻意做窄）：
     ///   1. 发现   —— 扫目录、读 module.json，不猜、不扫程序集特性；

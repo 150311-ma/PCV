@@ -14,7 +14,7 @@ namespace Pcv.Modular.Host
         /// <summary>日志写入的文件；为空则只输出到控制台。</summary>
         public string LogFile { get; set; }
         public bool EchoToConsole { get; set; } = true;
-        public string HostName { get; set; } = "PCL Modular Host";
+        public string HostName { get; set; } = "PCV Modular Host";
         public string HostVersion { get; set; } = "2.10.0";
     }
 

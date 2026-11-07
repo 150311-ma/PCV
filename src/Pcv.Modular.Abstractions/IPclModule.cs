@@ -17,7 +17,7 @@ namespace Pcv.Modular.Abstractions
     }
 
     /// <summary>
-    /// 所有 PCL 模块的入口契约。实现类必须有无参构造函数。
+    /// 所有 PCV 模块的入口契约。实现类必须有无参构造函数。
     /// </summary>
     public interface IPclModule
     {
@@ -54,7 +54,7 @@ namespace Pcv.Modular.Abstractions
     /// <summary>宿主环境信息。</summary>
     public sealed class HostInfo
     {
-        public string Name { get; set; } = "PCL Modular Host";
+        public string Name { get; set; } = "PCV Modular Host";
         public string Version { get; set; } = "1.0.0";
         public string BaseDirectory { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
         public string ModulesDirectory { get; set; }
