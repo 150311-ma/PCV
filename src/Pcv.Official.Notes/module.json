@@ -1,0 +1,22 @@
+{
+  "id": "pcv.official.notes",
+  "name": "随手记",
+  "version": "2.10.0",
+  "assembly": "Pcv.Official.Notes.dll",
+  "entry": "Pcv.Official.Notes.Entry",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 410,
+  "author": "150311-ma",
+  "description": "一张随手写的便签，存在自己模块的目录里，重启还在。",
+  "icon": "记",
+  "accent": "#0E9F6E",
+  "desktop": true,
+  "order": 20,
+  "tags": [
+    "官方",
+    "工具"
+  ],
+  "category": "工具"
+}

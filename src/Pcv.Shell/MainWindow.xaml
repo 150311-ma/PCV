@@ -167,6 +167,100 @@
             <Setter Property="CornerRadius" Value="14" />
         </Style>
 
+        <!-- 桌面图标：圆角方块 + 一个字 + 名称，像安卓 launcher 那样摆成网格 -->
+        <DataTemplate x:Key="DesktopIconTemplate">
+            <Button Width="104" Margin="6,4,6,12" Tag="{Binding Id}" Click="BtnOpenModule_Click"
+                    ToolTip="{Binding Detail}" Cursor="Hand" Background="Transparent" BorderThickness="0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <StackPanel x:Name="Root" Width="104" Background="Transparent">
+                            <Border x:Name="Tile" Width="66" Height="66" CornerRadius="21"
+                                    Background="{Binding AccentBrush}" HorizontalAlignment="Center">
+                                <Border x:Name="Gloss" CornerRadius="21" ClipToBounds="True">
+                                    <Grid>
+                                        <Rectangle Height="33" VerticalAlignment="Top" Fill="#16FFFFFF" />
+                                        <TextBlock Text="{Binding IconText}" FontSize="27" FontWeight="SemiBold"
+                                                   Foreground="White" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Border>
+                            <TextBlock x:Name="Caption" Text="{Binding Name}" FontSize="12" Margin="2,9,2,0"
+                                       Foreground="#33404F" HorizontalAlignment="Center"
+                                       TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Version}" FontSize="9.5" Foreground="#A7B0BE"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tile" Property="Opacity" Value="0.88" />
+                                <Setter TargetName="Caption" Property="Foreground" Value="#1370F3" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Tile" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.94" ScaleY="0.94" CenterX="33" CenterY="33" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </DataTemplate>
+
+        <!-- 市场条目：官方标记 + 图标 + 一句话 + 安装按钮 -->
+        <DataTemplate x:Key="MarketCardTemplate">
+            <Border Style="{StaticResource Card}" Padding="14,13" Margin="0,0,0,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="14"
+                            Background="{Binding AccentBrush}" VerticalAlignment="Top">
+                        <TextBlock Text="{Binding IconText}" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="14,1,12,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
+                                       Foreground="#131A24" />
+                            <TextBlock Text="{Binding Version}" FontSize="11" Margin="7,2,0,0"
+                                       Foreground="#9AA4B2" />
+                            <Border Background="#EAF2FE" CornerRadius="5" Padding="6,1" Margin="7,0,0,0"
+                                    VerticalAlignment="Center" Visibility="{Binding OfficialVisibility}">
+                                <TextBlock Text="官方" FontSize="10" Foreground="#0F63DB" />
+                            </Border>
+                            <Border Background="#F1F4F8" CornerRadius="5" Padding="6,1" Margin="5,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#6B7688" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Summary}" FontSize="11.5" Foreground="#7A8699"
+                                   Margin="0,5,0,0" TextWrapping="Wrap" LineHeight="17" />
+                        <TextBlock Text="{Binding SourceLine}" FontSize="10.5" Foreground="#A7B0BE"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="{Binding ActionText}" Tag="{Binding Id}"
+                            Click="BtnMarketInstall_Click" VerticalAlignment="Center"
+                            IsEnabled="{Binding CanInstall}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                <Setter Property="Height" Value="30" />
+                                <Setter Property="Padding" Value="14,0" />
+                                <Setter Property="FontSize" Value="11.5" />
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <!-- 列表卡片：软件与框架共用 -->
         <DataTemplate x:Key="FrameworkCardTemplate">
             <Border Style="{StaticResource Card}" Padding="16,14" Margin="0,0,0,8">
@@ -340,6 +434,15 @@
                             </StackPanel>
                         </Button>
 
+                        <Button x:Name="NavMarket" Style="{StaticResource NavButton}" Tag="market" Click="Nav_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M2,4 H14 L13,8 H3 Z M3,8 V14 H13 V8 M6,11 H10"
+                                      Stroke="#8A94A3" StrokeThickness="1.4" Width="13" Height="13"
+                                      Stretch="Uniform" VerticalAlignment="Center" StrokeLineJoin="Round" />
+                                <TextBlock Text="市场" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
                         <Button x:Name="NavCredits" Style="{StaticResource NavButton}" Tag="credits" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M8,1.5 A6.5,6.5 0 1 0 8.1,1.5 M8,7 V11 M8,4.4 V4.5"
@@ -351,6 +454,18 @@
                         </Button>
 
                         <Border Height="1" Background="#EDF2FA" Margin="20,14,20,14" />
+
+                        <Button Style="{StaticResource GhostButton}" Margin="16,0,16,8"
+                                HorizontalAlignment="Stretch" Click="BtnOnboarding_Click"
+                                ToolTip="第一次用？三页讲清楚怎么装、软件和框架分别是什么">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M8,1.5 A6.5,6.5 0 1 0 8.1,1.5 M6,6.2 A2,2 0 1 1 8,8.5 V10 M8,12 V12.1"
+                                      Stroke="#4A5563" StrokeThickness="1.5" Width="14" Height="14"
+                                      Stretch="Uniform" VerticalAlignment="Center"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <TextBlock Text="新手引导" Margin="9,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
 
                         <Button Style="{StaticResource GhostButton}" Margin="16,0,16,12"
                                 HorizontalAlignment="Stretch" Click="BtnSelfCheck_Click"
@@ -376,27 +491,56 @@
                     <ScrollViewer x:Name="ViewHome" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="32,22,32,28" MaxWidth="880">
-                            <TextBlock Text="已安装的软件" Style="{StaticResource PageTitle}" />
-                            <TextBlock Text="软件本身不含框架，能力都是向框架要的。" Style="{StaticResource PageSubtitle}"
-                                       Margin="0,6,0,20" />
-
-                            <Grid Margin="0,0,0,8">
-                                <TextBlock x:Name="LabSoftwareCount" FontSize="11.5" Foreground="#9AA4B2"
-                                           HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="应用桌面" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="点图标就能打开。软件本身不含框架，能力都是向框架要的。"
+                                               Style="{StaticResource PageSubtitle}" Margin="0,6,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            VerticalAlignment="Top">
+                                    <Button x:Name="BtnViewIcons" Content="图标" Click="BtnViewMode_Click" Tag="icons"
+                                            Style="{StaticResource GhostButton}" Height="28" Padding="12,0"
+                                            FontSize="11" Margin="0,0,6,0" />
+                                    <Button x:Name="BtnViewList" Content="列表" Click="BtnViewMode_Click" Tag="list"
+                                            Style="{StaticResource GhostButton}" Height="28" Padding="12,0"
+                                            FontSize="11" />
+                                </StackPanel>
                             </Grid>
-                            <ItemsControl x:Name="ListSoftware" ItemTemplate="{StaticResource FrameworkCardTemplate}" />
-                            <TextBlock x:Name="LabNoSoftware" Text="还没有软件。"
-                                       FontSize="12" Foreground="#9AA4B2" Margin="2,6,0,0"
+
+                            <Grid Margin="0,16,0,10">
+                                <TextBlock x:Name="LabSoftwareCount" FontSize="11.5" Foreground="#9AA4B2"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- 图标网格：WrapPanel 会按窗口宽度自动换行，和安卓桌面一致 -->
+                            <ItemsControl x:Name="GridDesktop" ItemTemplate="{StaticResource DesktopIconTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+
+                            <ItemsControl x:Name="ListSoftware" ItemTemplate="{StaticResource FrameworkCardTemplate}"
+                                          Visibility="Collapsed" />
+                            <TextBlock x:Name="LabNoSoftware" Text="桌面还是空的。"
+                                       FontSize="12" Foreground="#9AA4B2" Margin="4,6,0,0"
                                        Visibility="Collapsed" />
 
                             <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,22,0,0">
                                 <StackPanel>
                                     <TextBlock Text="想要装点东西？" FontSize="13" FontWeight="SemiBold"
                                                Foreground="#131A24" />
-                                    <TextBlock Text="去「安装」那页：挑文件、拖包，或者让 AI 写一个出来。"
+                                    <TextBlock Text="去「市场」挑官方现成的，或者去「安装」页拖包、让 AI 写一个。"
                                                FontSize="11.5" Foreground="#7A8699" Margin="0,6,0,12" />
-                                    <Button Content="去安装 →" Width="112" HorizontalAlignment="Left"
-                                            Style="{StaticResource GhostButton}" Click="BtnOpenAdd_Click" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="逛市场 →" Width="112" HorizontalAlignment="Left"
+                                                Style="{StaticResource PrimaryButton}" Click="BtnOpenMarket_Click" />
+                                        <Button Content="自己装" Width="94" Margin="10,0,0,0"
+                                                HorizontalAlignment="Left" Style="{StaticResource GhostButton}"
+                                                Click="BtnOpenAdd_Click" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -553,6 +697,116 @@
                                                Text="代码是从头重写的，可设计思路、契约结构和配色算法都是从 PCL 学来的——这份情要记。" />
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 市场：博客当服务端，静态清单 + .pclpkg -->
+                    <ScrollViewer x:Name="ViewMarket" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="32,22,32,28" MaxWidth="880">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="市场" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="官方做好的包，点一下就下载、校验、装到桌面。"
+                                               Style="{StaticResource PageSubtitle}" Margin="0,6,0,0" />
+                                </StackPanel>
+                                <Button Content="刷新" Width="80" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Style="{StaticResource GhostButton}" Click="BtnMarketRefresh_Click" />
+                            </Grid>
+
+                            <Border x:Name="PanMarketStatus" Background="#EEF8F2" BorderBrush="#CFEBDA"
+                                    BorderThickness="1" CornerRadius="11" Padding="13,10" Margin="0,18,0,12">
+                                <TextBlock x:Name="LabMarketStatus" FontSize="11.5" Foreground="#1B6B45"
+                                           TextWrapping="Wrap" LineHeight="18" Text="正在读取市场…" />
+                            </Border>
+
+                            <ItemsControl x:Name="ListMarket" ItemTemplate="{StaticResource MarketCardTemplate}" />
+                            <TextBlock x:Name="LabNoMarket" Text="市场暂时没有条目。"
+                                       FontSize="12" Foreground="#9AA4B2" Margin="2,8,0,0"
+                                       Visibility="Collapsed" />
+
+                            <Border Style="{StaticResource Card}" Padding="16,14" Margin="0,20,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="装之前会检查什么" FontSize="12.5" FontWeight="SemiBold"
+                                               Foreground="#131A24" />
+                                    <TextBlock Text="清单里的大小和 SHA-256 先对一遍，再交给安装器查路径越界、模块 id、依赖和宿主版本。任何一项不过就直接丢弃，不留半个包。"
+                                               FontSize="11.5" Foreground="#7A8699" TextWrapping="Wrap"
+                                               LineHeight="18" Margin="0,6,0,0" />
+                                    <TextBlock x:Name="LabMarketSource" FontSize="10.5" Foreground="#A7B0BE"
+                                               Margin="0,9,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 新手引导：初次启动自动停在这页 -->
+                    <ScrollViewer x:Name="ViewOnboarding" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="32,24,32,30" MaxWidth="820">
+                            <Border Background="#1370F3" CornerRadius="16" Padding="24,22" Margin="0,0,0,18">
+                                <StackPanel>
+                                    <TextBlock Text="欢迎使用 PCV" FontSize="23" FontWeight="SemiBold"
+                                               Foreground="White" />
+                                    <TextBlock Text="三分钟讲清楚：这是干什么用的、怎么装东西、软件和框架到底谁管谁。"
+                                               FontSize="12.5" Foreground="#DCEBFF" TextWrapping="Wrap"
+                                               LineHeight="20" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="① PCV 是什么" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="#131A24" />
+                                    <TextBlock Text="它自己不干活，只负责把「包」装进来、摆到桌面上、点一下能打开。你看到的每个圆角图标，都是一个装好的包。"
+                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               LineHeight="21" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="② 软件 与 框架" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="#131A24" />
+                                    <TextBlock Text="软件是你点开用的东西；框架是藏在后面提供能力的，比如主题、登录、统计。软件自己不含框架，能力都是向框架要的 —— 所以装软件之前，它依赖的框架得先在。"
+                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               LineHeight="21" Margin="0,8,0,0" />
+                                    <TextBlock Text="想看装了哪些框架，去左边「框架」；桌面上的图标主要是软件和你自己装的应用。"
+                                               FontSize="11.5" Foreground="#7A8699" TextWrapping="Wrap"
+                                               LineHeight="18" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="③ 怎么装东西" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="#131A24" />
+                                    <TextBlock Text="最快：去「市场」挑一个官方包，点安装，等它自己下载校验装好。"
+                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               LineHeight="21" Margin="0,8,0,0" />
+                                    <TextBlock Text="也可以把 .pclpkg 直接拖进窗口；或者去「安装」页复制提示词给 AI，拿回一段脚本粘进来，跑完自动安装。卸载、覆盖、版本检查都由安装器兜着。"
+                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               LineHeight="21" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,18">
+                                <StackPanel>
+                                    <TextBlock Text="④ 装不上的时候" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="#131A24" />
+                                    <TextBlock Text="点侧栏的「运行一次自检」，它会把模块清单、依赖、目录权限逐项过一遍，结果能一键复制成报告。"
+                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               LineHeight="21" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="开始使用 →" Width="132" Style="{StaticResource PrimaryButton}"
+                                        Click="BtnOnboardingDone_Click" />
+                                <Button Content="先去市场看看" Width="124" Margin="10,0,0,0"
+                                        Style="{StaticResource GhostButton}" Click="BtnOpenMarket_Click" />
+                            </StackPanel>
+                            <TextBlock Text="以后想再看这页，点侧栏「新手引导」就行。"
+                                       FontSize="11" Foreground="#A7B0BE" Margin="0,12,0,0" />
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

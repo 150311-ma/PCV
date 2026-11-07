@@ -36,6 +36,8 @@
   <ItemGroup>
     <Resource Include="..\..\assets\pcv-256.png" Link="assets\pcv.png" />
     <EmbeddedResource Include="..\..\assets\prompt-framework.md" LogicalName="PCV.prompt-framework.md" />
+    <!-- 断网兜底：清单由 tools/build_market.py 生成，和博客上那份是同一份字节 -->
+    <EmbeddedResource Include="..\..\market\index.json" LogicalName="PCV.market-index.json" />
   </ItemGroup>
 
   <!--

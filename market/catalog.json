@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "site": "https://cyan-blog-2fk.pages.dev/market/",
+  "note": "市场清单的唯一真相源。file 指向 dist/ 里的包；size 与 sha256 由 tools/build_market.py 现场算出来填进 index.json，不要手抄。",
+  "items": [
+    {
+      "id": "pcv.official.guide",
+      "name": "官方入门指南",
+      "author": "150311-ma",
+      "summary": "一张卡片讲清软件、框架、市场分别是什么，第一次用先看它。",
+      "category": "工具",
+      "icon": "指",
+      "accent": "#1370F3",
+      "official": true,
+      "tags": ["官方", "入门"],
+      "file": "pcv.official.guide-2.10.0.pclpkg"
+    },
+    {
+      "id": "pcv.official.notes",
+      "name": "随手记",
+      "author": "150311-ma",
+      "summary": "一张随手写的便签，存在自己模块的目录里，重启还在。",
+      "category": "工具",
+      "icon": "记",
+      "accent": "#0E9F6E",
+      "official": true,
+      "tags": ["官方", "工具"],
+      "file": "pcv.official.notes-2.10.0.pclpkg"
+    },
+    {
+      "id": "pcv.official.dock",
+      "name": "快捷面板",
+      "author": "150311-ma",
+      "summary": "读出宿主装了哪些模块，点一下就打开。框架权限的可执行说明。",
+      "category": "工具",
+      "icon": "快",
+      "accent": "#7A5AF8",
+      "official": true,
+      "tags": ["官方", "工具"],
+      "file": "pcv.official.dock-2.10.0.pclpkg"
+    },
+    {
+      "id": "pcv.stat",
+      "name": "使用统计",
+      "author": "150311-ma",
+      "summary": "记打开次数、起始日期、累计时长。只存在本地，不联网。",
+      "category": "框架",
+      "icon": "统",
+      "accent": "#1370F3",
+      "official": true,
+      "tags": ["官方", "统计"],
+      "file": "Pcv.Stat-2.10.0.pclpkg"
+    },
+    {
+      "id": "pcv.cleaner",
+      "name": "垃圾清理",
+      "author": "150311-ma",
+      "summary": "清掉过期的备份和两周前的日志，每删一项都写进日志。",
+      "category": "框架",
+      "icon": "清",
+      "accent": "#0E9F6E",
+      "official": true,
+      "tags": ["官方", "维护"],
+      "file": "Pcv.Cleaner-2.10.0.pclpkg"
+    },
+    {
+      "id": "pcv.diagnostics",
+      "name": "环境自检",
+      "author": "150311-ma",
+      "summary": "看一眼宿主、模块目录和运行时版本对不对。",
+      "category": "框架",
+      "icon": "检",
+      "accent": "#7A5AF8",
+      "official": true,
+      "tags": ["官方", "诊断"],
+      "file": "Pcv.Diagnostics-2.10.0.pclpkg"
+    }
+  ]
+}

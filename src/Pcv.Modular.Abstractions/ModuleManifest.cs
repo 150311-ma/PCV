@@ -76,6 +76,16 @@ namespace Pcv.Modular.Abstractions
         public string Description { get; set; }
         /// <summary>可选标签，仅供界面分组，不参与加载逻辑。</summary>
         public List<string> Tags { get; set; } = new List<string>();
+
+        /// <summary>桌面图标上显示的一个字（或 emoji）。留空则取名称首字。</summary>
+        public string Icon { get; set; }
+        /// <summary>桌面图标底色，#RRGGBB。留空则由 id 哈希生成，保证同一个模块每次颜色一样。</summary>
+        public string Accent { get; set; }
+        /// <summary>是否出现在「桌面」页。默认 true：所有能打开的东西都是应用。</summary>
+        public bool Desktop { get; set; } = true;
+        /// <summary>桌面上的排序，小的在前。</summary>
+        public int Order { get; set; } = 100;
+
         /// <summary>要求的最低宿主版本，语义化版本比较。</summary>
         public string MinHostVersion { get; set; }
 

@@ -1,0 +1,22 @@
+{
+  "id": "pcv.official.dock",
+  "name": "快捷面板",
+  "version": "2.10.0",
+  "assembly": "Pcv.Official.Dock.dll",
+  "entry": "Pcv.Official.Dock.Entry",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 420,
+  "author": "150311-ma",
+  "description": "读出宿主装了哪些模块，点一下就打开。框架能用的宿主能力都在这张卡上。",
+  "icon": "快",
+  "accent": "#7A5AF8",
+  "desktop": true,
+  "order": 30,
+  "tags": [
+    "官方",
+    "工具"
+  ],
+  "category": "工具"
+}

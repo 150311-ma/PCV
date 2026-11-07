@@ -1,10 +1,11 @@
 # src/ — 源代码
 
-十三个工程，分四层。**依赖只能从上往下**，反过来就是设计错了。
+十六个工程，分四层。**依赖只能从上往下**，反过来就是设计错了。
 
 ```
 壳（可执行）
-  Pcv.Shell                 PCV.exe：四页界面、构建、安装、托盘
+  Pcv.Shell                 PCV.exe：六页界面、市场、桌面图标、新手引导、托盘
+                            HostControl 实现受控宿主能力并注册进 Services
 
 加载与包管理（库，被壳引用）
   Pcv.Modular.Host          扫 modules/、解析清单、依赖排序、装配服务
@@ -13,7 +14,8 @@
   Pcv.Modular.Cli           命令行：列表 / 安装 / 自检
 
 契约（所有模块都只依赖它）
-  Pcv.Modular.Abstractions  IPclModule · IModuleContext · ModuleManifest · 服务接口
+  Pcv.Modular.Abstractions  IPclModule · IModuleContext · ModuleManifest
+                            IHostControl（框架能用的宿主能力）· 其它服务接口
 
 模块（各自一个 dll + module.json）
   Pcv.Core                  基础：路径、JSON 配置、颜色换算
@@ -23,7 +25,14 @@
   Pcv.Stat                  使用统计（只记本地）
   Pcv.Cleaner               垃圾清理
   Pcv.Demo.Hello            最小可跑示例
+  Pcv.Official.Guide        官方入门指南（市场包，演示 IHostControl 切页）
+  Pcv.Official.Notes        随手记（市场包，演示模块私有数据目录）
+  Pcv.Official.Dock         快捷面板（市场包，演示读模块清单 / 打开模块）
 ```
+
+三个 `Pcv.Official.*` 是**市场上架的官方包**，不随安装包分发：
+打好的 `.pclpkg` 在 `dist/`，展示信息在 `market/catalog.json`。
+清单里声明 `icon` / `accent` / `desktop` / `order` 可以控制桌面图标的样子和顺序。
 
 ## 几条不能破的规矩
 

@@ -11,7 +11,8 @@
     3. 模块清单：id / assembly / entry / category 合法
     4. 随包模块表：README 那张表必须和 build_installer.py 的 PACKAGES 对得上
     5. 源码卫生：没有绝对路径、没有硬编码令牌
-    6. 工作流：两个闸门文件都在
+    6. 市场清单：index.json 与 catalog.json / dist 里的包一致（含 sha256）
+    7. 工作流：两个闸门文件都在
 
 用法：
     python tools/check_repo.py                 # 体检，退出码 0=健康 / 1=有问题
@@ -34,8 +35,11 @@ VERSION_FILE = "installer/PCV.Setup/Installer.cs"
 SKIP_DIRS = {"bin", "obj", ".git", ".vs", "PCLData", "logs", "stage", ".build"}
 TEXT_SUFFIXES = {".py", ".cs", ".json", ".md", ".xaml", ".yml", ".yaml", ".csproj", ".cmd", ".txt"}
 # 复制一份做故障注入时不要搬这些大东西，检查器只看文本和文件名
+# dist/*.pclpkg 必须带上：check_market 要对它们算 sha256。
+# 它们每个只有几 KB，带上不会拖慢反向验证；排除掉的话市场检查会因为
+# "dist 里没这个包" 一直报红，任何注入都算"抓到了"，那是假阳性。
 IGNORE_BIG = shutil.ignore_patterns("*.exe", "*.dll", "*.pdb", "*.mp4", "*.png", "*.jpg",
-                                    "*.zip", "*.pclpkg", "bin", "obj", ".git")
+                                    "*.zip", "bin", "obj", ".git")
 
 
 class Result:
@@ -163,8 +167,11 @@ def check_doc_links(root, result):
             "docs/README.md", "assets/README.md", "dist/README.md",
             ".github/PULL_REQUEST_TEMPLATE.md"]
     # 只看像是仓库内路径的引用；URL、示例产物、占位符都跳过
+    # 路径部分用 \w（含汉字）而不是 [A-Za-z0-9_]：文档里写
+    # `tools/这个脚本.py` 也是引用，早期只认 ASCII 的版本会整条漏掉
+    # ——反向验证注入的恰好就是中文路径，于是「验证通过」其实是假阳性。
     pattern = re.compile(r"(?<![\w/])((?:src|tools|samples|installer|assets|docs|dist|\.github)/"
-                         r"[A-Za-z0-9_./-]+\.(?:py|cmd|cs|json|md|yml|yaml|sln|exe|pclpkg))")
+                         r"[\w./-]+\.(?:py|cmd|cs|json|md|yml|yaml|sln|exe|pclpkg))")
     missing = []
     checked = 0
     for relative in docs:
@@ -265,6 +272,23 @@ def check_hygiene(root, result):
     result.add("源码与脚本没有绝对路径 / 硬编码令牌", not problems, "；".join(problems[:6]))
 
 
+def check_market(root, result):
+    """市场清单：index.json 必须是 dist 现状的真实反映，不能手抄后忘改。
+
+    复用 build_market.build() 现场重算一份，和仓库里那份逐字段比。
+    不自己再写一套解析 —— 两份校验逻辑必然漂移。
+    """
+    try:
+        sys.path.insert(0, str(root / "tools"))
+        import build_market
+        expected, problems = build_market.build(root)
+        issues = build_market.verify(root, expected, problems)
+        result.add(f"市场清单 {len(expected['items'])} 个条目与 dist 一致", not issues,
+                   "；".join(issues[:6]))
+    except Exception as error:
+        result.add("市场清单与 dist 一致", False, f"检查器自身出错：{error}")
+
+
 def check_workflows(root, result):
     expected = {
         ".github/workflows/pr-guard.yml": "pr-guard",
@@ -284,6 +308,7 @@ def run_checks(root):
     check_manifests(root, result)
     check_package_table(root, result)
     check_hygiene(root, result)
+    check_market(root, result)
     check_workflows(root, result)
     return result
 
@@ -326,7 +351,14 @@ def inject_fault():
     def bad_link(p):
         target = p / "README.md"
         backup = target.read_text(encoding="utf-8")
+        # 中文文件名也要能被引出来：只认 ASCII 的正则会把它整条漏掉
         target.write_text(backup + "\n\n参考 `tools/这个脚本不存在.py`。\n", encoding="utf-8")
+        return target, backup
+
+    def bad_link_ascii(p):
+        target = p / "README.md"
+        backup = target.read_text(encoding="utf-8")
+        target.write_text(backup + "\n\n参考 `tools/no_such_script.py`。\n", encoding="utf-8")
         return target, backup
 
     def bad_manifest(p):
@@ -341,10 +373,22 @@ def inject_fault():
         target.write_text(backup + '\n# C:\\Users\\someone\\secret\n', encoding="utf-8")
         return target, backup
 
+    def bad_market(p):
+        target = p / "market/index.json"
+        backup = target.read_text(encoding="utf-8")
+        data = json.loads(backup)
+        data["items"][0]["sha256"] = "0" * 64
+        target.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        return target, backup
+
     scenario("版本号改错会报红", bad_version, "module.json 版本")
-    scenario("文档引用不存在的脚本会报红", bad_link, "文档引用")
+    # 判据写具体路径，不写「文档引用」这种检查项名字：
+    # 后者只要这一项因为别的原因红了就会假通过。
+    scenario("文档引用不存在的中文脚本会报红", bad_link, "tools/这个脚本不存在.py")
+    scenario("文档引用不存在的英文脚本会报红", bad_link_ascii, "tools/no_such_script.py")
     scenario("模块 id 不合法会报红", bad_manifest, "module.json 字段合法")
     scenario("源码里塞绝对路径会报红", bad_path, "绝对路径")
+    scenario("市场清单校验和被改会报红", bad_market, "市场清单")
 
     shutil.rmtree(probe.parent, ignore_errors=True)
     print("== 体检器反向验证（注入已知故障） ==")
