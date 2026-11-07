@@ -1,7 +1,7 @@
 {
   "id": "pcv.core",
   "name": "PCV 基础模块",
-  "version": "2.10.0",
+  "version": "0.0.1",
   "assembly": "Pcv.Core.dll",
   "entry": "Pcv.Core.CoreModule",
   "category": "framework",
