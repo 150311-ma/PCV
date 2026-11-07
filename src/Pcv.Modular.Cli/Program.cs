@@ -65,7 +65,7 @@ namespace Pcv.Modular.Cli
 
         private static void PrintHelp()
         {
-            Console.WriteLine("PCL 模块加载器验证工具");
+            Console.WriteLine("PCV 模块加载器验证工具");
             Console.WriteLine("  Pcv.Modular.Cli [模块目录]            加载并打印模块表（默认 ./modules）");
             Console.WriteLine("  Pcv.Modular.Cli --modules <目录>      同上，显式指定目录");
             Console.WriteLine("  Pcv.Modular.Cli --inject-fault        跑故障注入用例，验证加载器能识别各类坏模块");

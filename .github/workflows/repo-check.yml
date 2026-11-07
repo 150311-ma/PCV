@@ -1,0 +1,32 @@
+name: repo-check
+
+# 静态体检：不需要 Windows、不需要编译，所以能在 ubuntu-latest 上稳定跑。
+# 和 pr-guard 分工：pr-guard 管「有没有 Issue、标题合不合规」；
+# 这个管「版本号对不对、文档有没有指向不存在的文件、清单合不合法、有没有绝对路径」。
+# 两个都是 main 的必需状态检查。
+#
+# 第二步是体检器自检：注入几个已知故障，确认体检真的会报红。
+# 一个从不报错的检查，比没有检查更糟。
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: repo-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: 仓库体检
+        run: python tools/check_repo.py
+      - name: 体检器自检（注入故障，确认它会报红）
+        run: python tools/check_repo.py --inject-fault

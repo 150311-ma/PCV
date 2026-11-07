@@ -3,7 +3,7 @@
   这不是走形式——下面每一条都对应一次真实踩过的坑。
 
   ★ 硬要求：本项目每次更新都必须先有 Issue。
-  pr-guard 是 main 的必需状态检查，不满足就合并不了，没有豁免标签。
+  main 有两个必需状态检查：pr-guard 管流程，repo-check 管内容。
 -->
 
 ## 这个 PR 做了什么
@@ -31,7 +31,9 @@ Closes #
 ### 构建与运行
 
 - [ ] `dotnet build Pcv.sln -c Release` 零错误
-- [ ] `python tools/deploy_desktop.py` 跑过，模块自检显示「模块图健康」
+- [ ] `python tools/check_repo.py` 全绿
+- [ ] `python tools/check_repo.py --inject-fault` 全绿（体检器本身也要被校验）
+- [ ] `Pcv.Modular.Cli.exe --modules <目录>` 显示「模块图健康」
 - [ ] 界面有改动的话，用 `PCV.exe --render out.png --page <页>` 看过渲染结果
 - [ ] 没有再出现「构建输出里的旧模块目录」这种残留（改模块 Id 时最容易忘）
 

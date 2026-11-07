@@ -145,6 +145,36 @@ namespace Pcv.Shell
                 themeService.Apply(e.Args[themeIndex + 1]);
             }
 
+            // 一键自检：命令行直接开这个窗口。界面里走侧栏那个按钮，两者同一个窗口。
+            // 配 --render 可以离屏渲染成 PNG，用来确认新窗口真的画出来了。
+            if (Array.IndexOf(e.Args, "--selfcheck") >= 0)
+            {
+                var checkWindow = new SelfCheckWindow(report, modulesDirectory,
+                                                      baseDirectory, _host.Host.Version);
+                MainWindow = checkWindow;
+                var checkRender = Array.IndexOf(e.Args, "--render");
+                if (checkRender >= 0)
+                {
+                    var target = checkRender + 1 < e.Args.Length
+                        ? e.Args[checkRender + 1]
+                        : Path.Combine(baseDirectory, "selfcheck.png");
+                    try
+                    {
+                        RenderToFile(checkWindow, target, 780, 620);
+                        Console.WriteLine("已渲染：" + target);
+                        Shutdown(0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("渲染失败：" + ex);
+                        Shutdown(2);
+                    }
+                    return;
+                }
+                checkWindow.Show();
+                return;
+            }
+
             var window = new MainWindow(_host, report);
             MainWindow = window;
 

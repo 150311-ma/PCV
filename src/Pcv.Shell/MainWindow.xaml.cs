@@ -15,8 +15,9 @@ using Pcv.Modular.Packages;
 namespace Pcv.Shell
 {
     /// <summary>
-    /// 两页：首页（装包 + 已装列表）和"加一个包"（导入 / 自己做）。
-    /// 没有第三页，也没有设置页——PCV 本身没有功能可设置。
+    /// 四页：软件 / 安装 / 框架 / 版权，左侧导航切换。
+    /// 自检在独立窗口里（侧栏底部的「运行一次自检」），不占导航项——
+    /// 它不是一页内容，是一次性的检查结果。
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -194,6 +195,14 @@ namespace Pcv.Shell
         }
 
         private void BtnBack_Click(object sender, RoutedEventArgs e) => ShowHome();
+
+        /// <summary>用户视角的体检：现在装的这套东西健不健康。一次性结果，所以不占导航项。</summary>
+        private void BtnSelfCheck_Click(object sender, RoutedEventArgs e)
+        {
+            new SelfCheckWindow(_report, _host.ModulesDirectory,
+                                AppDomain.CurrentDomain.BaseDirectory,
+                                _host.Host.Version) { Owner = this }.ShowDialog();
+        }
 
         /// <summary>给 App 的自动启动用：不带 owner，窗口就是独立窗口。</summary>
         public void RunProcessFrameworkFor(ModuleManifest manifest, string directory)

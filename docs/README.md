@@ -2,17 +2,20 @@
 
 ```
 docs/
-  screenshots/   界面截图（home / install / frameworks / credits）
+  screenshots/   界面截图（home / install / frameworks / credits / selfcheck）
   promo/         宣传片、B 站投稿包
 ```
 
 ## screenshots/
 
-四张，对应界面的四页，都是**程序自己离屏渲染**出来的，不是截图工具抓的：
+五张：四张对应界面的四页，加一张自检窗口，都是**程序自己离屏渲染**出来的，不是截图工具抓的：
 
 ```bat
 PCV.exe --render docs/screenshots/home.png --page home --size 1280x880
+PCV.exe --selfcheck --render docs/screenshots/selfcheck.png
 ```
+
+四页那几张是 1280×880；`selfcheck.png` 是窗口原始尺寸 780×620。
 
 好处是尺寸、主题、内容都可控；界面改了重新跑一遍就行。
 `--theme` 可以换配色，例如 `--theme violet`。
