@@ -1,0 +1,91 @@
+name: pr-guard
+
+# 「每次更新都要有 Issue 和 PR」的机器闸门，没有例外、没有豁免标签。
+# 四项检查全过才放行：
+#   1. PR 正文写了 Closes #N / Fixes #N / Resolves #N / Refs #N
+#   2. 这个编号确实是本仓库一个真实存在的 Issue（不是 PR，不是随手编的号）
+#   3. 标题以类型开头：fix: / feat: / docs: / refactor: / chore: / test: / build:
+#   4. 标题不超过 60 字（GitHub 文件列表右侧会显示它，太长会整列刷屏）
+# 配合 main 分支保护 required status check = pr-guard，绕不过去。
+#
+# 注意：workflow 定义在 PR 的源分支上取，所以「给仓库加这个闸门」的那次 PR 自己也会跑它。
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  guard:
+    name: pr-guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查 Issue 关联、标题格式与长度
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+            const title = (pr.title || "").trim();
+            const problems = [];
+            const rows = [];
+
+            // 1 + 2) 关联了一个真实存在的 Issue
+            const match = body.match(/\b(?:closes|fixes|resolves|refs)\b\s*:?\s*#(\d+)/i);
+            let issueState;
+            if (!match) {
+              problems.push("PR 正文没有关联 Issue：写一行 `Closes #12`（12 是 Issue 编号）。本项目每次更新都必须先有 Issue，没有例外。");
+              issueState = "❌ 缺失";
+            } else {
+              const number = Number(match[1]);
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: number,
+                });
+                if (issue.pull_request) {
+                  problems.push(`#${number} 是 PR 不是 Issue，请换成真正的 Issue 编号。`);
+                  issueState = `❌ #${number} 是 PR`;
+                } else {
+                  issueState = `✅ #${number} ${issue.state === "open" ? "（未关闭）" : "（已关闭）"}`;
+                }
+              } catch (error) {
+                problems.push(`正文里的 #${number} 不存在或读不到：${error.message}`);
+                issueState = `❌ #${number} 不存在`;
+              }
+            }
+            rows.push(["关联 Issue", issueState]);
+
+            // 3) 标题格式
+            const formatOk = /^(fix|feat|docs|refactor|chore|test|build)(\(.+\))?!?:/i.test(title);
+            if (!formatOk) {
+              problems.push("标题要以类型开头，例如 `fix: 运行中覆盖安装改为排队`。类型：fix / feat / docs / refactor / chore / test / build。");
+            }
+            rows.push(["标题格式", formatOk ? "✅ 合规" : "❌ 不合规"]);
+
+            // 4) 标题长度
+            const length = [...title].length;
+            const lengthOk = length > 0 && length <= 60;
+            if (!lengthOk) {
+              problems.push(`标题 ${length} 字，要求 1–60 字。GitHub 文件列表右侧会显示提交标题，太长会被截断成一整列相同的字。`);
+            }
+            rows.push(["标题长度", `${length}/60 ${lengthOk ? "✅" : "❌"}`]);
+
+            await core.summary
+              .addHeading("PR 检查", 3)
+              .addTable([
+                [{ data: "项目", header: true }, { data: "结果", header: true }],
+                ...rows,
+              ])
+              .write();
+
+            if (problems.length > 0) {
+              core.setFailed(problems.join("\n\n"));
+            } else {
+              core.info("四项都通过。");
+            }

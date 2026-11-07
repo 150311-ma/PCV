@@ -1,6 +1,9 @@
 <!--
   提交前把这份清单过一遍。勾不上的项，要么补做，要么在描述里说明为什么不做。
   这不是走形式——下面每一条都对应一次真实踩过的坑。
+
+  ★ 硬要求：本项目每次更新都必须先有 Issue。
+  pr-guard 是 main 的必需状态检查，不满足就合并不了，没有豁免标签。
 -->
 
 ## 这个 PR 做了什么
@@ -9,11 +12,21 @@
 
 ## 关联 issue
 
-<!-- Closes #123 / Refs #456 -->
+Closes #
+
+<!-- 必填：把 # 后面的编号补上（Closes #12 这样）。没有 Issue 就先去开一个：
+     https://github.com/150311-ma/PCV/issues/new/choose
+     pr-guard 会真的去查这个编号是不是本仓库的 Issue —— 填 PR 号、编号、不写，都会报红。 -->
 
 ---
 
 ## 提交前自检
+
+### 流程（pr-guard 会查）
+
+- [ ] 已经先开好 Issue，正文写了 `Closes #N`
+- [ ] PR 标题是 `<类型>: <一句话>`，且不超过 60 字
+- [ ] 类型是 fix / feat / docs / refactor / chore / test / build 之一
 
 ### 构建与运行
 
