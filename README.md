@@ -25,13 +25,13 @@ PCV 反过来：**壳只负责装、管、开**，每个能力是独立的一个
 
 ## 快速开始
 
-**安装**：下载 [`PCV-Setup-2.10.0.exe`](https://github.com/150311-ma/PCV/releases/latest)，双击。
+**安装**：下载 [`PCV-Setup-3.0.0.exe`](https://github.com/150311-ma/PCV/releases/latest)，双击。
 装在 `%LOCALAPPDATA%\Programs\PAINCHARNWAV`，不需要管理员权限，桌面和开始菜单会有快捷方式。
 
 静默安装（批量部署用）：
 
 ```bat
-PCV-Setup-2.10.0.exe --silent --dir D:\Apps\PCV
+PCV-Setup-3.0.0.exe --silent --dir D:\Apps\PCV
 ```
 
 **从源码构建**：
@@ -207,17 +207,17 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 
 | Id | 名称 | 版本 | 类别 |
 | --- | --- | --- | --- |
-| `pcv.core` | 基础模块 | 2.10.0 | framework |
-| `pcv.theme` | 主题 | 2.10.0 | framework |
-| `pcv.launch.microsoft` | 微软登录 | 2.10.0 | framework |
-| `pcv.diagnostics` | 环境自检 | 2.10.0 | framework |
-| `pcv.stat` | 使用统计（仅本地） | 2.10.0 | framework |
-| `pcv.cleaner` | 垃圾清理 | 2.10.0 | framework |
-| `pcv.demo.hello` | 示例框架 | 2.10.0 | framework |
-| `pcv.py.demo` | Python 示例框架 | 2.10.0 | framework |
-| `pcv.app.demo` | 示例软件 | 2.10.0 | software |
-| `pcv.mc.launcher` | Minecraft 启动 | 2.10.0 | 游戏 |
-| `pcv.rel.demo` | 相对路径示例 | 2.10.0 | framework |
+| `pcv.core` | 基础模块 | 3.0.0 | framework |
+| `pcv.theme` | 主题 | 3.0.0 | framework |
+| `pcv.launch.microsoft` | 微软登录 | 3.0.0 | framework |
+| `pcv.diagnostics` | 环境自检 | 3.0.0 | framework |
+| `pcv.stat` | 使用统计（仅本地） | 3.0.0 | framework |
+| `pcv.cleaner` | 垃圾清理 | 3.0.0 | framework |
+| `pcv.demo.hello` | 示例框架 | 3.0.0 | framework |
+| `pcv.py.demo` | Python 示例框架 | 3.0.0 | framework |
+| `pcv.app.demo` | 示例软件 | 3.0.0 | software |
+| `pcv.mc.launcher` | Minecraft 启动 | 3.0.0 | 游戏 |
+| `pcv.rel.demo` | 相对路径示例 | 3.0.0 | framework |
 
 这张表的 Id 必须和 `tools/build_installer.py` 的 `PACKAGES` 对得上——`tools/check_repo.py` 会查。
 

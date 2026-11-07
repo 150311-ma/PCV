@@ -379,7 +379,7 @@
                                    VerticalAlignment="Center" Foreground="#131A24" />
                         <Border Background="#EDF2FA" CornerRadius="6" Padding="6,2" Margin="8,0,0,0"
                                 VerticalAlignment="Center">
-                            <TextBlock x:Name="LabVersion" Text="2.10.0" FontSize="10" Foreground="#6B7688" />
+                            <TextBlock x:Name="LabVersion" Text="3.0.0" FontSize="10" Foreground="#6B7688" />
                         </Border>
                     </StackPanel>
 
