@@ -1,0 +1,21 @@
+{
+  "id": "pcv.api",
+  "name": "API 接口",
+  "version": "3.0.0",
+  "assembly": "Pcv.Api.dll",
+  "entry": "Pcv.Api.Entry",
+  "category": "framework",
+  "dependencies": [
+    "pcv.core"
+  ],
+  "loadPriority": 60,
+  "author": "150311-ma",
+  "description": "在线接口网关：登记接口、管密钥、测连通。已有能力直接登记，新功能通过 API 接入。",
+  "icon": "API",
+  "accent": "#0E9F6E",
+  "desktop": false,
+  "tags": [
+    "在线",
+    "框架"
+  ]
+}

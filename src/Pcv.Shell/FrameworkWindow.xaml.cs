@@ -139,7 +139,7 @@ namespace Pcv.Shell
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             FontSize = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x34, 0x3D, 0x4A)),
+            Foreground = Trm.Ink,
             Margin = new Thickness(0, 2, 0, 0)
         };
 
@@ -148,7 +148,7 @@ namespace Pcv.Shell
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x7C, 0x87, 0x98)),
+            Foreground = Trm.Help,
             Margin = new Thickness(0, 6, 0, 0)
         };
 
@@ -157,7 +157,7 @@ namespace Pcv.Shell
             Text = text,
             FontSize = 11.5,
             FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x8A, 0x94, 0xA3)),
+            Foreground = Trm.Help,
             Margin = new Thickness(0, 18, 0, 4)
         };
 
@@ -168,13 +168,13 @@ namespace Pcv.Shell
             FontFamily = new FontFamily("Consolas, Microsoft YaHei UI"),
             FontSize = 11.5,
             LineHeight = 18,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63))
+            Foreground = Trm.InkMuted
         };
 
         private static Border Divider() => new Border
         {
             Height = 1,
-            Background = new SolidColorBrush(Color.FromRgb(0xEC, 0xEF, 0xF4)),
+            Background = Trm.Group,
             Margin = new Thickness(0, 16, 0, 0)
         };
 

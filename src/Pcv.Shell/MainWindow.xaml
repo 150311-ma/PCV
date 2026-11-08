@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="PAINCHARNWAV" Height="820" Width="1120" MinHeight="680" MinWidth="940"
-        WindowStyle="None" ResizeMode="CanResize" Background="#F6F8FC"
+        WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource TrmShell}"
         WindowStartupLocation="CenterScreen" Icon="/assets/pcv.png"
-        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13"
+        FontFamily="{DynamicResource TrmFont}" FontSize="{DynamicResource TrmTextControl}"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
         AllowDrop="True" DragOver="Window_DragOver" DragLeave="Window_DragLeave" Drop="Window_Drop">
 
@@ -16,41 +16,41 @@
     <Window.Resources>
 
         <Style x:Key="PageTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextTitle}" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#131A24" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmInk}" />
         </Style>
 
         <Style x:Key="PageSubtitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Foreground" Value="#7A8699" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextHelp}" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmHelp}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
         <Style x:Key="SectionLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#9AA4B2" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmMeta}" />
         </Style>
 
         <!-- 窗口按钮 -->
         <Style x:Key="ChromeButton" TargetType="Button">
             <Setter Property="Width" Value="44" />
             <Setter Property="Height" Value="32" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource TrmTransparent}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="#4A5563" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmInkMuted}" />
             <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource TrmRadiusSmall}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="Background" Value="#14000000" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmChromeVeil}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -62,13 +62,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource TrmRadiusSmall}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="Background" Value="#E5484D" />
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmDanger}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TrmSurface}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -81,21 +81,21 @@
             <Setter Property="Height" Value="38" />
             <Setter Property="Margin" Value="10,0,10,2" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextControl}" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="#4A5563" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmInkMuted}" />
+            <Setter Property="Background" Value="{DynamicResource TrmTransparent}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Border x:Name="Pill" Background="{TemplateBinding Background}" CornerRadius="9" />
+                            <Border x:Name="Pill" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource TrmRadiusSmall}" />
                             <ContentPresenter Margin="12,0" VerticalAlignment="Center" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Pill" Property="Background" Value="#0E000000" />
+                                <Setter TargetName="Pill" Property="Background" Value="{DynamicResource TrmHoverVeil}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -106,21 +106,21 @@
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Height" Value="36" />
             <Setter Property="Padding" Value="18,0" />
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#1370F3" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextHelp}" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmSurface}" />
+            <Setter Property="Background" Value="{DynamicResource TrmAccent}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="9">
+                        <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource TrmRadiusSmall}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                                               Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="Background" Value="#0F63DB" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmAccentChipInk}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Shell" Property="Opacity" Value="0.45" />
@@ -134,10 +134,10 @@
         <Style x:Key="GhostButton" TargetType="Button">
             <Setter Property="Height" Value="34" />
             <Setter Property="Padding" Value="14,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="#4A5563" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#E1E9F5" />
+            <Setter Property="FontSize" Value="{DynamicResource TrmTextHelp}" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmInkMuted}" />
+            <Setter Property="Background" Value="{DynamicResource TrmSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TrmLine}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -145,14 +145,14 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Shell" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9">
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource TrmRadiusSmall}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                                               Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="BorderBrush" Value="#C9D8EE" />
-                                <Setter TargetName="Shell" Property="Background" Value="#FAFCFF" />
+                                <Setter TargetName="Shell" Property="BorderBrush" Value="{DynamicResource TrmFocusLine}" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmSurface}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -161,8 +161,8 @@
         </Style>
 
         <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#E6EDF7" />
+            <Setter Property="Background" Value="{DynamicResource TrmSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TrmHairline}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="14" />
         </Style>
@@ -170,31 +170,31 @@
         <!-- 桌面图标：圆角方块 + 一个字 + 名称，像安卓 launcher 那样摆成网格 -->
         <DataTemplate x:Key="DesktopIconTemplate">
             <Button Width="104" Margin="6,4,6,12" Tag="{Binding Id}" Click="BtnOpenModule_Click"
-                    ToolTip="{Binding Detail}" Cursor="Hand" Background="Transparent" BorderThickness="0">
+                    ToolTip="{Binding Detail}" Cursor="Hand" Background="{DynamicResource TrmTransparent}" BorderThickness="0">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
-                        <StackPanel x:Name="Root" Width="104" Background="Transparent">
-                            <Border x:Name="Tile" Width="66" Height="66" CornerRadius="21"
+                        <StackPanel x:Name="Root" Width="104" Background="{DynamicResource TrmTransparent}">
+                            <Border x:Name="Tile" Width="66" Height="66" CornerRadius="{DynamicResource TrmRadius}"
                                     Background="{Binding AccentBrush}" HorizontalAlignment="Center">
-                                <Border x:Name="Gloss" CornerRadius="21" ClipToBounds="True">
+                                <Border x:Name="Gloss" CornerRadius="{DynamicResource TrmRadius}" ClipToBounds="True">
                                     <Grid>
-                                        <Rectangle Height="33" VerticalAlignment="Top" Fill="#16FFFFFF" />
+                                        <Rectangle Height="33" VerticalAlignment="Top" Fill="{DynamicResource TrmGloss}" />
                                         <TextBlock Text="{Binding IconText}" FontSize="27" FontWeight="SemiBold"
-                                                   Foreground="White" HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource TrmWhite}" HorizontalAlignment="Center"
                                                    VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
                             </Border>
-                            <TextBlock x:Name="Caption" Text="{Binding Name}" FontSize="12" Margin="2,9,2,0"
-                                       Foreground="#33404F" HorizontalAlignment="Center"
+                            <TextBlock x:Name="Caption" Text="{Binding Name}" FontSize="{DynamicResource TrmTextHelp}" Margin="2,9,2,0"
+                                       Foreground="{DynamicResource TrmInk}" HorizontalAlignment="Center"
                                        TextAlignment="Center" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding Version}" FontSize="9.5" Foreground="#A7B0BE"
+                            <TextBlock Text="{Binding Version}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
                                        HorizontalAlignment="Center" Margin="0,2,0,0" />
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Tile" Property="Opacity" Value="0.88" />
-                                <Setter TargetName="Caption" Property="Foreground" Value="#1370F3" />
+                                <Setter TargetName="Caption" Property="Foreground" Value="{DynamicResource TrmAccent}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Tile" Property="RenderTransform">
@@ -219,30 +219,30 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="14"
+                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="{DynamicResource TrmRadius}"
                             Background="{Binding AccentBrush}" VerticalAlignment="Top">
                         <TextBlock Text="{Binding IconText}" FontSize="19" FontWeight="SemiBold"
-                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                   Foreground="{DynamicResource TrmWhite}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
 
                     <StackPanel Grid.Column="1" Margin="14,1,12,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                       Foreground="#131A24" />
-                            <TextBlock Text="{Binding Version}" FontSize="11" Margin="7,2,0,0"
-                                       Foreground="#9AA4B2" />
-                            <Border Background="#EAF2FE" CornerRadius="5" Padding="6,1" Margin="7,0,0,0"
+                            <TextBlock Text="{Binding Name}" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TrmInk}" />
+                            <TextBlock Text="{Binding Version}" FontSize="{DynamicResource TrmTextMeta}" Margin="7,2,0,0"
+                                       Foreground="{DynamicResource TrmMeta}" />
+                            <Border Background="{DynamicResource TrmAccentSoft}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,1" Margin="7,0,0,0"
                                     VerticalAlignment="Center" Visibility="{Binding OfficialVisibility}">
-                                <TextBlock Text="官方" FontSize="10" Foreground="#0F63DB" />
+                                <TextBlock Text="官方" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmAccentChipInk}" />
                             </Border>
-                            <Border Background="#F1F4F8" CornerRadius="5" Padding="6,1" Margin="5,0,0,0"
+                            <Border Background="{DynamicResource TrmChip}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,1" Margin="5,0,0,0"
                                     VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#6B7688" />
+                                <TextBlock Text="{Binding Category}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding Summary}" FontSize="11.5" Foreground="#7A8699"
+                        <TextBlock Text="{Binding Summary}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}"
                                    Margin="0,5,0,0" TextWrapping="Wrap" LineHeight="17" />
-                        <TextBlock Text="{Binding SourceLine}" FontSize="10.5" Foreground="#A7B0BE"
+                        <TextBlock Text="{Binding SourceLine}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
                                    Margin="0,4,0,0" />
                     </StackPanel>
 
@@ -253,7 +253,7 @@
                             <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
                                 <Setter Property="Height" Value="30" />
                                 <Setter Property="Padding" Value="14,0" />
-                                <Setter Property="FontSize" Value="11.5" />
+                                <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
                             </Style>
                         </Button.Style>
                     </Button>
@@ -273,12 +273,12 @@
                     </Grid.ColumnDefinitions>
 
                     <Button Content="打开" Tag="{Binding Id}" Click="BtnOpenModule_Click"
-                            Height="28" Padding="14,0" FontSize="11.5" VerticalAlignment="Center"
+                            Height="28" Padding="14,0" FontSize="{DynamicResource TrmTextMeta}" VerticalAlignment="Center"
                             Margin="0,0,14,0">
                         <Button.Style>
                             <Style TargetType="Button">
-                                <Setter Property="Foreground" Value="#0F63DB" />
-                                <Setter Property="Background" Value="#EAF2FE" />
+                                <Setter Property="Foreground" Value="{DynamicResource TrmAccentChipInk}" />
+                                <Setter Property="Background" Value="{DynamicResource TrmAccentSoft}" />
                                 <Setter Property="Cursor" Value="Hand" />
                                 <Setter Property="BorderThickness" Value="0" />
                                 <Setter Property="Visibility" Value="Visible" />
@@ -286,14 +286,14 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="Shell" Background="{TemplateBinding Background}"
-                                                    CornerRadius="8">
+                                                    CornerRadius="{DynamicResource TrmRadiusSmall}">
                                                 <ContentPresenter HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center"
                                                                   Margin="{TemplateBinding Padding}" />
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Shell" Property="Background" Value="#DCEAFD" />
+                                                    <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmAccentSoftHover}" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -308,28 +308,28 @@
                         </Button.Style>
                     </Button>
 
-                    <Border Grid.Column="1" Width="38" Height="38" CornerRadius="11" Background="#F1F6FD"
+                    <Border Grid.Column="1" Width="38" Height="38" CornerRadius="{DynamicResource TrmRadiusSmall}" Background="{DynamicResource TrmIconTile}"
                             VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Initial}" FontSize="12.5" FontWeight="SemiBold"
-                                   Foreground="#1370F3" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Initial}" FontSize="{DynamicResource TrmTextHelp}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TrmAccent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
 
                     <StackPanel Grid.Column="2" Margin="13,0,12,0" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                       Foreground="#131A24" />
-                            <TextBlock Text="{Binding Version}" FontSize="11" Margin="7,2,0,0"
-                                       Foreground="#9AA4B2" />
-                            <Border Background="{Binding StatePill}" CornerRadius="5" Padding="6,1" Margin="7,0,0,0"
+                            <TextBlock Text="{Binding Name}" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TrmInk}" />
+                            <TextBlock Text="{Binding Version}" FontSize="{DynamicResource TrmTextMeta}" Margin="7,2,0,0"
+                                       Foreground="{DynamicResource TrmMeta}" />
+                            <Border Background="{Binding StatePill}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,1" Margin="7,0,0,0"
                                     VerticalAlignment="Center">
-                                <TextBlock Text="{Binding State}" FontSize="10" Foreground="{Binding StateInk}" />
+                                <TextBlock Text="{Binding State}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{Binding StateInk}" />
                             </Border>
-                            <Border Background="#FFF4E5" CornerRadius="5" Padding="6,1" Margin="5,0,0,0"
+                            <Border Background="{DynamicResource TrmWarnSoft}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,1" Margin="5,0,0,0"
                                     VerticalAlignment="Center" Visibility="{Binding BaseVisibility}">
-                                <TextBlock Text="{Binding BaseLabel}" FontSize="10" Foreground="#9A5B00" />
+                                <TextBlock Text="{Binding BaseLabel}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmWarnInk}" />
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="#7A8699"
+                        <TextBlock Text="{Binding Detail}" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}"
                                    Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
 
@@ -339,8 +339,8 @@
                             <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
                                 <Setter Property="Height" Value="26" />
                                 <Setter Property="Padding" Value="12,0" />
-                                <Setter Property="FontSize" Value="11" />
-                                <Setter Property="Foreground" Value="#8A94A3" />
+                                <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TrmHelp}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding CanUninstall}" Value="False">
                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -355,11 +355,13 @@
 
     </Window.Resources>
 
+    <!-- TRM Nexus 外壳：标题栏与侧栏是同一块白（shell-bg），内容区用窗口底色
+         向内收 shell-gap(8px) 并带 r(14px) 圆角。两块靠底色分区，不画分隔线。 -->
     <Grid x:Name="RootGrid">
-        <Border BorderBrush="#DCE5F2" BorderThickness="1" Background="#F6F8FC">
+        <Border Background="{DynamicResource TrmShell}">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="54" />
+                    <RowDefinition Height="52" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="34" />
                 </Grid.RowDefinitions>
@@ -375,40 +377,47 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Image Source="/assets/pcv.png" Width="22" Height="22"
                                RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock Text="PAINCHARNWAV" FontSize="13" FontWeight="SemiBold" Margin="9,0,0,0"
-                                   VerticalAlignment="Center" Foreground="#131A24" />
-                        <Border Background="#EDF2FA" CornerRadius="6" Padding="6,2" Margin="8,0,0,0"
-                                VerticalAlignment="Center">
-                            <TextBlock x:Name="LabVersion" Text="3.0.0" FontSize="10" Foreground="#6B7688" />
+                        <TextBlock Text="PAINCHARNWAV" FontSize="{DynamicResource TrmTextControl}" FontWeight="SemiBold" Margin="9,0,0,0"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TrmInk}" />
+                        <!-- 版本号只是版本号。维护入口不挂在导航上，也不给任何提示。 -->
+                        <Border Background="{DynamicResource TrmHairline}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,2" Margin="8,0,0,0"
+                                VerticalAlignment="Center" MouseLeftButtonDown="VersionBadge_MouseLeftButtonDown">
+                            <TextBlock x:Name="LabVersion" Text="3.0.0" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
                         </Border>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- 外观是所有人都能用的功能，不该藏在维护页里 -->
+                        <Button x:Name="BtnThemeToggle" Style="{StaticResource ChromeButton}"
+                                Click="BtnThemeToggle_Click" ToolTip="切换浅色 / 深色外观">
+                            <TextBlock x:Name="LabThemeToggle" Text="深" FontSize="{DynamicResource TrmTextMeta}"
+                                       Foreground="{DynamicResource TrmInkMuted}" />
+                        </Button>
                         <Button Style="{StaticResource ChromeButton}" Click="BtnMin_Click" ToolTip="最小化">
-                            <Rectangle Width="10" Height="1.4" Fill="#4A5563" />
+                            <Rectangle Width="10" Height="1.4" Fill="{DynamicResource TrmInkMuted}" />
                         </Button>
                         <Button Style="{StaticResource ChromeButton}" Click="BtnMax_Click" ToolTip="最大化">
-                            <Rectangle Width="9" Height="9" Stroke="#4A5563" StrokeThickness="1.4"
+                            <Rectangle Width="9" Height="9" Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.4"
                                        RadiusX="1" RadiusY="1" />
                         </Button>
                         <Button Style="{StaticResource CloseButton}" Click="BtnClose_Click" Margin="4,0,4,0"
                                 ToolTip="关闭">
-                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="#4A5563" StrokeThickness="1.5"
+                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Button>
                     </StackPanel>
                 </Grid>
 
                 <!-- 左导航 -->
-                <Border Grid.Row="1" Width="208" HorizontalAlignment="Left" Background="#FBFCFE"
-                        BorderBrush="#E9EFF8" BorderThickness="0,0,1,0">
+                <Border Grid.Row="1" Width="208" HorizontalAlignment="Left"
+                        Background="{DynamicResource TrmShell}">
                     <StackPanel Margin="0,12,0,0">
                         <TextBlock Text="工作区" Style="{StaticResource SectionLabel}" Margin="22,0,0,8" />
 
                         <Button x:Name="NavSoftware" Style="{StaticResource NavButton}" Tag="home" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M2,2 H7 V7 H2 Z M9,2 H14 V7 H9 Z M2,9 H7 V14 H2 Z M9,9 H14 V14 H9 Z"
-                                      Fill="#8A94A3" Width="13" Height="13" Stretch="Uniform"
+                                      Fill="{DynamicResource TrmHelp}" Width="13" Height="13" Stretch="Uniform"
                                       VerticalAlignment="Center" />
                                 <TextBlock Text="软件" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
@@ -416,7 +425,7 @@
 
                         <Button x:Name="NavInstall" Style="{StaticResource NavButton}" Tag="install" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
-                                <Path Data="M8,2 V10 M4,7 L8,11 L12,7 M2,13 H14" Stroke="#8A94A3"
+                                <Path Data="M8,2 V10 M4,7 L8,11 L12,7 M2,13 H14" Stroke="{DynamicResource TrmHelp}"
                                       StrokeThickness="1.5" Width="13" Height="13" Stretch="Uniform"
                                       VerticalAlignment="Center" StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" />
@@ -428,7 +437,7 @@
                                 Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M8,2 L14,5 L8,8 L2,5 Z M2,9 L8,12 L14,9 M2,12 L8,15 L14,12"
-                                      Stroke="#8A94A3" StrokeThickness="1.4" Width="13" Height="13"
+                                      Stroke="{DynamicResource TrmHelp}" StrokeThickness="1.4" Width="13" Height="13"
                                       Stretch="Uniform" VerticalAlignment="Center" StrokeLineJoin="Round" />
                                 <TextBlock Text="框架" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
@@ -437,7 +446,7 @@
                         <Button x:Name="NavMarket" Style="{StaticResource NavButton}" Tag="market" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M2,4 H14 L13,8 H3 Z M3,8 V14 H13 V8 M6,11 H10"
-                                      Stroke="#8A94A3" StrokeThickness="1.4" Width="13" Height="13"
+                                      Stroke="{DynamicResource TrmHelp}" StrokeThickness="1.4" Width="13" Height="13"
                                       Stretch="Uniform" VerticalAlignment="Center" StrokeLineJoin="Round" />
                                 <TextBlock Text="市场" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
@@ -446,21 +455,26 @@
                         <Button x:Name="NavCredits" Style="{StaticResource NavButton}" Tag="credits" Click="Nav_Click">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M8,1.5 A6.5,6.5 0 1 0 8.1,1.5 M8,7 V11 M8,4.4 V4.5"
-                                      Stroke="#8A94A3" StrokeThickness="1.5" Width="13" Height="13"
+                                      Stroke="{DynamicResource TrmHelp}" StrokeThickness="1.5" Width="13" Height="13"
                                       Stretch="Uniform" VerticalAlignment="Center"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 <TextBlock Text="版权" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
-                        <Border Height="1" Background="#EDF2FA" Margin="20,14,20,14" />
+                        <!-- 维护入口不进导航：普通用户不该看到它，也不该被引导去找它。
+                             这里保留一个折叠项，只为让 ShowView 的 Highlight 有对象。 -->
+                        <Button x:Name="NavAdmin" Style="{StaticResource NavButton}" Tag="admin" Click="Nav_Click"
+                                Visibility="Collapsed" IsTabStop="False" />
+
+                        <Border Height="1" Background="{DynamicResource TrmHairline}" Margin="20,14,20,14" />
 
                         <Button Style="{StaticResource GhostButton}" Margin="16,0,16,8"
                                 HorizontalAlignment="Stretch" Click="BtnOnboarding_Click"
                                 ToolTip="第一次用？三页讲清楚怎么装、软件和框架分别是什么">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="M8,1.5 A6.5,6.5 0 1 0 8.1,1.5 M6,6.2 A2,2 0 1 1 8,8.5 V10 M8,12 V12.1"
-                                      Stroke="#4A5563" StrokeThickness="1.5" Width="14" Height="14"
+                                      Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.5" Width="14" Height="14"
                                       Stretch="Uniform" VerticalAlignment="Center"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                 <TextBlock Text="新手引导" Margin="9,0,0,0" VerticalAlignment="Center" />
@@ -471,7 +485,7 @@
                                 HorizontalAlignment="Stretch" Click="BtnSelfCheck_Click"
                                 ToolTip="装不上东西时点这里，看看是哪一步出的问题">
                             <StackPanel Orientation="Horizontal">
-                                <Path Data="M2,8 L6,12 L14,3" Stroke="#4A5563" StrokeThickness="1.7"
+                                <Path Data="M2,8 L6,12 L14,3" Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.7"
                                       Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round" />
@@ -480,17 +494,37 @@
                         </Button>
 
                         <TextBlock Text="拖 .pclpkg 到窗口就能装"
-                                   FontSize="11" Foreground="#9AA4B2" TextWrapping="Wrap"
+                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}" TextWrapping="Wrap"
                                    LineHeight="17" Margin="22,0,22,0" />
                     </StackPanel>
                 </Border>
 
-                <!-- 内容区 -->
-                <Grid Grid.Row="1" Margin="208,0,0,0">
+                <!-- 内嵌工作区：向右下各留 8px，米白底 + 14px 圆角 -->
+                <Border Grid.Row="1" Margin="208,0,8,8"
+                        Background="{DynamicResource TrmWorkspace}"
+                        CornerRadius="{DynamicResource TrmRadius}" ClipToBounds="True">
+                    <Grid>
 
                     <ScrollViewer x:Name="ViewHome" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="32,22,32,28" MaxWidth="880">
+                            <!-- 自动更新：有新版本才出现，点了直接去 GitHub release -->
+                            <Border x:Name="PanUpdateTip" Visibility="Collapsed" Background="{DynamicResource TrmAccentSoft}"
+                                    BorderBrush="{DynamicResource TrmLine}" BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}"
+                                    Padding="14,10" Margin="0,0,0,14" Cursor="Hand"
+                                    MouseLeftButtonUp="UpdateTip_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="LabUpdateTip" FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmAccentChipInk}"
+                                               TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="去 GitHub 下载 →" FontSize="{DynamicResource TrmTextMeta}"
+                                               Foreground="{DynamicResource TrmAccent}" Margin="12,0,0,0"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="应用桌面" Style="{StaticResource PageTitle}" />
@@ -501,15 +535,15 @@
                                             VerticalAlignment="Top">
                                     <Button x:Name="BtnViewIcons" Content="图标" Click="BtnViewMode_Click" Tag="icons"
                                             Style="{StaticResource GhostButton}" Height="28" Padding="12,0"
-                                            FontSize="11" Margin="0,0,6,0" />
+                                            FontSize="{DynamicResource TrmTextMeta}" Margin="0,0,6,0" />
                                     <Button x:Name="BtnViewList" Content="列表" Click="BtnViewMode_Click" Tag="list"
                                             Style="{StaticResource GhostButton}" Height="28" Padding="12,0"
-                                            FontSize="11" />
+                                            FontSize="{DynamicResource TrmTextMeta}" />
                                 </StackPanel>
                             </Grid>
 
                             <Grid Margin="0,16,0,10">
-                                <TextBlock x:Name="LabSoftwareCount" FontSize="11.5" Foreground="#9AA4B2"
+                                <TextBlock x:Name="LabSoftwareCount" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
                                            VerticalAlignment="Center" />
                             </Grid>
 
@@ -525,15 +559,15 @@
                             <ItemsControl x:Name="ListSoftware" ItemTemplate="{StaticResource FrameworkCardTemplate}"
                                           Visibility="Collapsed" />
                             <TextBlock x:Name="LabNoSoftware" Text="桌面还是空的。"
-                                       FontSize="12" Foreground="#9AA4B2" Margin="4,6,0,0"
+                                       FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmMeta}" Margin="4,6,0,0"
                                        Visibility="Collapsed" />
 
                             <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,22,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="想要装点东西？" FontSize="13" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="想要装点东西？" FontSize="{DynamicResource TrmTextControl}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="去「市场」挑官方现成的，或者去「安装」页拖包、让 AI 写一个。"
-                                               FontSize="11.5" Foreground="#7A8699" Margin="0,6,0,12" />
+                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" Margin="0,6,0,12" />
                                     <StackPanel Orientation="Horizontal">
                                         <Button Content="逛市场 →" Width="112" HorizontalAlignment="Left"
                                                 Style="{StaticResource PrimaryButton}" Click="BtnOpenMarket_Click" />
@@ -554,18 +588,18 @@
                                        Margin="0,6,0,20" />
 
                             <Grid x:Name="DropFrame" Height="168" AllowDrop="True">
-                                <Border x:Name="DropZone" Background="White" BorderBrush="#D7E3F4"
-                                        BorderThickness="1.5" CornerRadius="14">
+                                <Border x:Name="DropZone" Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmAccentSoftHover}"
+                                        BorderThickness="1.5" CornerRadius="{DynamicResource TrmRadius}">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <Path Data="M8,2 V12 M4,8 L8,12 L12,8 M2,15 H14"
-                                              Stroke="#B6C4D8" StrokeThickness="1.8" Width="24" Height="24"
+                                              Stroke="{DynamicResource TrmLine}" StrokeThickness="1.8" Width="24" Height="24"
                                               Stretch="Uniform" StrokeStartLineCap="Round"
                                               StrokeEndLineCap="Round" HorizontalAlignment="Center" />
                                         <TextBlock x:Name="LabDropTitle" Text="拖一个 .pclpkg 或构建脚本进来"
-                                                   FontSize="14" FontWeight="SemiBold" Foreground="#4A5563"
+                                                   FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold" Foreground="{DynamicResource TrmInkMuted}"
                                                    Margin="0,12,0,0" HorizontalAlignment="Center" />
                                         <TextBlock Text=".pclpkg 直接装；.py / .js / .ps1 会先跑完再自动装"
-                                                   FontSize="11.5" Foreground="#9AA4B2" Margin="0,6,0,0"
+                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}" Margin="0,6,0,0"
                                                    HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
@@ -582,10 +616,10 @@
 
                                 <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16,16">
                                     <StackPanel>
-                                        <TextBlock Text="① 挑一个文件" FontSize="12.5" FontWeight="SemiBold"
-                                                   Foreground="#131A24" />
-                                        <TextBlock Text="从硬盘里选 .pclpkg，装上。" FontSize="11.5"
-                                                   Foreground="#7A8699" TextWrapping="Wrap" Margin="0,6,0,12"
+                                        <TextBlock Text="① 挑一个文件" FontSize="{DynamicResource TrmTextHelp}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock Text="从硬盘里选 .pclpkg，装上。" FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,6,0,12"
                                                    LineHeight="17" />
                                         <Button Content="选择文件" HorizontalAlignment="Left"
                                                 Style="{StaticResource GhostButton}" Click="BtnChooseFile_Click" />
@@ -594,10 +628,10 @@
 
                                 <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,16">
                                     <StackPanel>
-                                        <TextBlock Text="② 让 AI 写" FontSize="12.5" FontWeight="SemiBold"
-                                                   Foreground="#131A24" />
-                                        <TextBlock Text="把提示词贴给 DeepSeek，拿回一段脚本。" FontSize="11.5"
-                                                   Foreground="#7A8699" TextWrapping="Wrap" Margin="0,6,0,12"
+                                        <TextBlock Text="② 让 AI 写" FontSize="{DynamicResource TrmTextHelp}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock Text="把提示词贴给 DeepSeek，拿回一段脚本。" FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,6,0,12"
                                                    LineHeight="17" />
                                         <Button x:Name="BtnMake" Content="复制提示词" HorizontalAlignment="Left"
                                                 Style="{StaticResource GhostButton}" Click="BtnMake_Click" />
@@ -606,10 +640,10 @@
 
                                 <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16,16">
                                     <StackPanel>
-                                        <TextBlock Text="③ 直接跑脚本" FontSize="12.5" FontWeight="SemiBold"
-                                                   Foreground="#131A24" />
-                                        <TextBlock Text="产物落在隔离目录，跑完自动装上。" FontSize="11.5"
-                                                   Foreground="#7A8699" TextWrapping="Wrap" Margin="0,6,0,12"
+                                        <TextBlock Text="③ 直接跑脚本" FontSize="{DynamicResource TrmTextHelp}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock Text="产物落在隔离目录，跑完自动装上。" FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,6,0,12"
                                                    LineHeight="17" />
                                         <Button Content="粘一段 Python" HorizontalAlignment="Left"
                                                 Style="{StaticResource GhostButton}" Click="BtnPasteScript_Click" />
@@ -617,10 +651,10 @@
                                 </Border>
                             </Grid>
 
-                            <Border x:Name="PanCopied" Background="#EEF8F2" BorderBrush="#CFEBDA"
+                            <Border x:Name="PanCopied" Background="{DynamicResource TrmOkSoft}" BorderBrush="{DynamicResource TrmOkSoft}"
                                     BorderThickness="1" CornerRadius="12" Padding="14,11" Margin="0,18,0,0"
                                     Visibility="Collapsed">
-                                <TextBlock x:Name="LabCopied" TextWrapping="Wrap" FontSize="12" Foreground="#1B6B45"
+                                <TextBlock x:Name="LabCopied" TextWrapping="Wrap" FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmOkInk}"
                                            LineHeight="19" />
                             </Border>
                         </StackPanel>
@@ -637,7 +671,7 @@
                                 <!-- 自定义类别：每个类别一个分组，由代码生成，标题用包自己声明的名字 -->
                                 <StackPanel x:Name="PanExtraCategories" />
                                 <TextBlock x:Name="LabNoFramework" Text="还没有框架。去「安装」那页装一个。"
-                                           FontSize="12" Foreground="#9AA4B2" Margin="2,6,0,0"
+                                           FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmMeta}" Margin="2,6,0,0"
                                            Visibility="Collapsed" />
                             </StackPanel>
                         </StackPanel>
@@ -652,31 +686,31 @@
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="本项目基于 PCL 修改" FontSize="15" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="12.5" Margin="0,9,0,0"
-                                               Foreground="#4A5563"
+                                    <TextBlock Text="本项目基于 PCL 修改" FontSize="{DynamicResource TrmTextBody}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
+                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="{DynamicResource TrmTextHelp}" Margin="0,9,0,0"
+                                               Foreground="{DynamicResource TrmInkMuted}"
                                                Text="PAINCHARNWAV（PCV）是第三方基于 Plain Craft Launcher (PCL) 独立进行的二次创作，与 PCL 官方无关。" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="12.5" Margin="0,7,0,0"
-                                               Foreground="#4A5563"
+                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="{DynamicResource TrmTextHelp}" Margin="0,7,0,0"
+                                               Foreground="{DynamicResource TrmInkMuted}"
                                                Text="底层从 PCL 的代码结构改起：删掉了赞助、土豆码、识别码那一整套，重新做成「加载器 + 契约 + 独立框架包」的结构。" />
                                 </StackPanel>
                             </Border>
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="上游作者" FontSize="11.5" FontWeight="SemiBold" Foreground="#9AA4B2" />
+                                    <TextBlock Text="上游作者" FontSize="{DynamicResource TrmTextMeta}" FontWeight="SemiBold" Foreground="{DynamicResource TrmMeta}" />
                                     <TextBlock Text="龙腾猫跃（LTCat）" FontSize="19" FontWeight="Bold" Margin="0,7,0,0"
-                                               Foreground="#131A24" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="12" Margin="0,9,0,0"
-                                               Foreground="#4A5563"
+                                               Foreground="{DynamicResource TrmInk}" />
+                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="{DynamicResource TrmTextHelp}" Margin="0,9,0,0"
+                                               Foreground="{DynamicResource TrmInkMuted}"
                                                Text="PCL 的作者。没有他的工作，就没有这个项目。喜欢 PCL 的话，可以去给他点个赞助。" />
                                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                        <TextBlock FontSize="12" Foreground="#1370F3" Cursor="Hand"
+                                        <TextBlock FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmAccent}" Cursor="Hand"
                                                    Text="github.com/Meloong-Git/PCL"
                                                    MouseLeftButtonUp="Link_Click" Tag="https://github.com/Meloong-Git/PCL" />
-                                        <TextBlock Text="·" FontSize="12" Margin="9,0" Foreground="#B6BFCC" />
-                                        <TextBlock FontSize="12" Foreground="#1370F3" Cursor="Hand"
+                                        <TextBlock Text="·" FontSize="{DynamicResource TrmTextHelp}" Margin="9,0" Foreground="{DynamicResource TrmFocusLine}" />
+                                        <TextBlock FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmAccent}" Cursor="Hand"
                                                    Text="赞助：meloong.com/afd/a/LTCat"
                                                    MouseLeftButtonUp="Link_Click" Tag="https://meloong.com/afd/a/LTCat" />
                                     </StackPanel>
@@ -685,15 +719,15 @@
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,8">
                                 <StackPanel>
-                                    <TextBlock Text="许可" FontSize="11.5" FontWeight="SemiBold" Foreground="#9AA4B2" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="12.5" Margin="0,9,0,0"
-                                               Foreground="#4A5563"
+                                    <TextBlock Text="许可" FontSize="{DynamicResource TrmTextMeta}" FontWeight="SemiBold" Foreground="{DynamicResource TrmMeta}" />
+                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="{DynamicResource TrmTextHelp}" Margin="0,9,0,0"
+                                               Foreground="{DynamicResource TrmInkMuted}"
                                                Text="PCV 自己的源代码以 MIT 开源（LICENSE）：可以读、可以改、可以商用，保留版权声明就行；项目名称和图标不在授权范围内。" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="12.5" Margin="0,7,0,0"
-                                               Foreground="#4A5563"
+                                    <TextBlock TextWrapping="Wrap" LineHeight="21" FontSize="{DynamicResource TrmTextHelp}" Margin="0,7,0,0"
+                                               Foreground="{DynamicResource TrmInkMuted}"
                                                Text="仓库根目录的 LICENCE-PCL 是上游 PCL 的来源记录与署名，不再约束本项目的代码。但如果你自己把 PCL 的代码合进来，那部分仍然受它约束。" />
-                                    <TextBlock TextWrapping="Wrap" LineHeight="20" FontSize="12" Margin="0,9,0,0"
-                                               Foreground="#7A8699"
+                                    <TextBlock TextWrapping="Wrap" LineHeight="20" FontSize="{DynamicResource TrmTextHelp}" Margin="0,9,0,0"
+                                               Foreground="{DynamicResource TrmHelp}"
                                                Text="代码是从头重写的，可设计思路、契约结构和配色算法都是从 PCL 学来的——这份情要记。" />
                                 </StackPanel>
                             </Border>
@@ -714,28 +748,237 @@
                                         Style="{StaticResource GhostButton}" Click="BtnMarketRefresh_Click" />
                             </Grid>
 
-                            <Border x:Name="PanMarketStatus" Background="#EEF8F2" BorderBrush="#CFEBDA"
-                                    BorderThickness="1" CornerRadius="11" Padding="13,10" Margin="0,18,0,12">
-                                <TextBlock x:Name="LabMarketStatus" FontSize="11.5" Foreground="#1B6B45"
+                            <Border x:Name="PanMarketStatus" Background="{DynamicResource TrmOkSoft}" BorderBrush="{DynamicResource TrmOkSoft}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="13,10" Margin="0,18,0,12">
+                                <TextBlock x:Name="LabMarketStatus" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmOkInk}"
                                            TextWrapping="Wrap" LineHeight="18" Text="正在读取市场…" />
                             </Border>
 
                             <ItemsControl x:Name="ListMarket" ItemTemplate="{StaticResource MarketCardTemplate}" />
                             <TextBlock x:Name="LabNoMarket" Text="市场暂时没有条目。"
-                                       FontSize="12" Foreground="#9AA4B2" Margin="2,8,0,0"
+                                       FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmMeta}" Margin="2,8,0,0"
                                        Visibility="Collapsed" />
 
                             <Border Style="{StaticResource Card}" Padding="16,14" Margin="0,20,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="装之前会检查什么" FontSize="12.5" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="装之前会检查什么" FontSize="{DynamicResource TrmTextHelp}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="清单里的大小和 SHA-256 先对一遍，再交给安装器查路径越界、模块 id、依赖和宿主版本。任何一项不过就直接丢弃，不留半个包。"
-                                               FontSize="11.5" Foreground="#7A8699" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
                                                LineHeight="18" Margin="0,6,0,0" />
-                                    <TextBlock x:Name="LabMarketSource" FontSize="10.5" Foreground="#A7B0BE"
+                                    <TextBlock x:Name="LabMarketSource" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
                                                Margin="0,9,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- 服务设置：入口不对外展示，只在版本号连点后到达 -->
+                    <ScrollViewer x:Name="ViewAdmin" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                        <StackPanel Margin="32,22,32,28" MaxWidth="880">
+                            <StackPanel>
+                                <TextBlock Text="服务设置" Style="{StaticResource PageTitle}" />
+                                <TextBlock Text="市场开关、在线接口、自动更新都收在这里。用服务器每 10 分钟换一次的凭据进入维护模式。"
+                                           Style="{StaticResource PageSubtitle}" Margin="0,6,0,0" />
+                            </StackPanel>
+
+                            <!-- 外观：TRM 的两套令牌，标题栏上也能切 -->
+                            <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,18,0,12">
+                                <Grid>
+                                    <StackPanel>
+                                        <TextBlock Text="外观" FontSize="{DynamicResource TrmTextList}"
+                                                   FontWeight="SemiBold" Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock x:Name="LabThemeState" Text="浅色"
+                                                   FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmHelp}" Margin="0,4,0,0"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center">
+                                        <Button x:Name="BtnThemeLight" Content="浅色" Width="76"
+                                                Style="{StaticResource GhostButton}" Click="BtnThemeLight_Click" />
+                                        <Button x:Name="BtnThemeDark" Content="深色" Width="76" Margin="8,0,0,0"
+                                                Style="{StaticResource GhostButton}" Click="BtnThemeDark_Click" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- 未解锁 -->
+                            <Border x:Name="PanAdminLocked" Style="{StaticResource Card}" Padding="20,18"
+                                    Margin="0,18,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="① 用当前凭据解锁" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
+                                    <TextBlock Text="凭证由服务器按时间片签发，每 10 分钟轮换；本地不算、也不保存。断网时不能新解锁。"
+                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                               Margin="0,6,0,0" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                        <TextBlock x:Name="LabAdminKey" Text="—— —— ——" FontSize="24"
+                                                   FontWeight="SemiBold" Foreground="{DynamicResource TrmAccent}" />
+                                        <TextBlock x:Name="LabAdminKeyExpire" Text="正在连接服务器…"
+                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" Margin="14,0,0,0"
+                                                   VerticalAlignment="Bottom" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="LabAdminKeyError" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmDanger}"
+                                               TextWrapping="Wrap" Margin="0,6,0,0" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <TextBox x:Name="TxtAdminKeyInput" Width="160" Height="34"
+                                                 FontSize="{DynamicResource TrmTextBody}" VerticalContentAlignment="Center"
+                                                 Padding="10,0" ToolTip="输入服务器当前凭据" />
+                                        <Button Content="解锁" Width="88" Margin="10,0,0,0"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Click="BtnAdminUnlock_Click" />
+                                        <Button Content="刷新凭证" Width="96" Margin="8,0,0,0"
+                                                Style="{StaticResource GhostButton}"
+                                                Click="BtnAdminRefreshKey_Click" />
+                                    </StackPanel>
+
+                                    <Border Height="1" Background="{DynamicResource TrmHairline}" Margin="0,20,0,16" />
+                                    <TextBlock Text="② 接入密钥（API Key）" FontSize="{DynamicResource TrmTextControl}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
+                                    <TextBlock Text="调用受保护的接口时要带它。默认值来自服务端接口清单，改过服务端配置后在这里同步一下。"
+                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                               Margin="0,6,0,0" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                        <TextBox x:Name="TxtAdminAccessKey" Width="240" Height="32"
+                                                 FontSize="{DynamicResource TrmTextHelp}" VerticalContentAlignment="Center" Padding="9,0" />
+                                        <Button Content="保存并重连" Width="112" Margin="10,0,0,0"
+                                                Style="{StaticResource GhostButton}"
+                                                Click="BtnAdminSaveAccessKey_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 已解锁 -->
+                            <Border x:Name="PanAdminUnlocked" Visibility="Collapsed" Background="{DynamicResource TrmOkSoft}"
+                                    BorderBrush="{DynamicResource TrmOkSoft}" BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}"
+                                    Padding="16,12" Margin="0,18,0,12">
+                                <Grid>
+                                    <StackPanel>
+                                        <TextBlock Text="维护模式已开启" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmOkInk}" />
+                                        <TextBlock x:Name="LabAdminRemain" FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmOkInk}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                    <Button Content="退出维护模式" Width="132" HorizontalAlignment="Right"
+                                            VerticalAlignment="Center" Style="{StaticResource GhostButton}"
+                                            Click="BtnAdminExit_Click" />
+                                </Grid>
+                            </Border>
+
+                            <StackPanel x:Name="PanAdminTools" IsEnabled="False">
+                                <!-- 市场 -->
+                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="市场状态与开关" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock x:Name="LabAdminMarketState" Text="还没检查"
+                                                   FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
+                                                   LineHeight="19" Margin="0,8,0,0" />
+                                        <TextBlock x:Name="LabAdminServerState" FontSize="{DynamicResource TrmTextMeta}"
+                                                   Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                        <TextBlock x:Name="LabAdminNotice" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmAccent}"
+                                                   TextWrapping="Wrap" Margin="0,4,0,0" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                            <Button x:Name="BtnAdminToggleMarket" Content="关闭市场" Width="106"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Click="BtnAdminToggleMarket_Click" />
+                                            <Button Content="检查服务状态" Width="112" Margin="8,0,0,0"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BtnAdminCheck_Click" />
+                                            <Button Content="强制刷新清单" Width="112" Margin="8,0,0,0"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BtnAdminRefreshMarket_Click" />
+                                            <Button Content="清本地缓存" Width="104" Margin="8,0,0,0"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BtnAdminClearCache_Click" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="LabAdminAction" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
+                                                   TextWrapping="Wrap" Margin="0,10,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- 自动更新 -->
+                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="自动更新" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock Text="同时问博客服务端和 GitHub，取两者里更新的版本；只提示，不偷偷下载。"
+                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                                   Margin="0,6,0,0" />
+                                        <TextBlock x:Name="LabAdminUpdate" Text="还没检查"
+                                                   FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
+                                                   LineHeight="19" Margin="0,10,0,0" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button Content="检查更新" Width="100"
+                                                    Style="{StaticResource GhostButton}"
+                                                    Click="BtnAdminCheckUpdate_Click" />
+                                            <Button Content="去 GitHub 下载 →" Width="148" Margin="8,0,0,0"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Click="BtnAdminGoGitHub_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- API 接口管理 -->
+                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="API 接口管理" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TrmInk}" />
+                                        <TextBlock Text="已有的接口（比如激活码验证）直接用；以后加在线功能，在这张表里加一条就行，不用改壳的代码。"
+                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                                   Margin="0,6,0,0" />
+                                        <TextBlock x:Name="LabAdminApiInfo" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
+                                                   TextWrapping="Wrap" Margin="0,8,0,0" />
+                                        <ItemsControl x:Name="ListAdminEndpoints" Margin="0,12,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource TrmGroup}" BorderBrush="{DynamicResource TrmHairline}"
+                                                            BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}"
+                                                            Padding="12,9" Margin="0,0,0,7">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding Name}" FontSize="{DynamicResource TrmTextHelp}"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource TrmInk}" />
+                                                                    <TextBlock Text="{Binding StateText}"
+                                                                               FontSize="{DynamicResource TrmTextMeta}" Margin="9,2,0,0"
+                                                                               Foreground="{Binding StateBrush}" />
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding MethodText}"
+                                                                           FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmAccent}"
+                                                                           Margin="0,3,0,0" />
+                                                                <TextBlock Text="{Binding Note}" FontSize="{DynamicResource TrmTextMeta}"
+                                                                           Foreground="{DynamicResource TrmMeta}" TextWrapping="Wrap"
+                                                                           Margin="0,3,0,0" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center">
+                                                                <Button Content="{Binding ToggleText}" Width="62"
+                                                                        Tag="{Binding Id}" Margin="10,0,0,0"
+                                                                        Style="{StaticResource GhostButton}"
+                                                                        Click="BtnAdminToggleEndpoint_Click" />
+                                                                <Button Content="测试" Width="52" Margin="6,0,0,0"
+                                                                        Tag="{Binding Id}"
+                                                                        Style="{StaticResource GhostButton}"
+                                                                        Click="BtnAdminTestEndpoint_Click" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="LabAdminApiResult" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
+                                                   TextWrapping="Wrap" Margin="0,8,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -743,58 +986,58 @@
                     <ScrollViewer x:Name="ViewOnboarding" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
                         <StackPanel Margin="32,24,32,30" MaxWidth="820">
-                            <Border Background="#1370F3" CornerRadius="16" Padding="24,22" Margin="0,0,0,18">
+                            <Border Background="{DynamicResource TrmAccent}" CornerRadius="{DynamicResource TrmRadius}" Padding="24,22" Margin="0,0,0,18">
                                 <StackPanel>
-                                    <TextBlock Text="欢迎使用 PCV" FontSize="23" FontWeight="SemiBold"
-                                               Foreground="White" />
+                                    <TextBlock Text="欢迎使用 PCV" FontSize="{DynamicResource TrmTextTitle}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmWhite}" />
                                     <TextBlock Text="三分钟讲清楚：这是干什么用的、怎么装东西、软件和框架到底谁管谁。"
-                                               FontSize="12.5" Foreground="#DCEBFF" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmAccentInk}" TextWrapping="Wrap"
                                                LineHeight="20" Margin="0,8,0,0" />
                                 </StackPanel>
                             </Border>
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="① PCV 是什么" FontSize="14" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="① PCV 是什么" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="它自己不干活，只负责把「包」装进来、摆到桌面上、点一下能打开。你看到的每个圆角图标，都是一个装好的包。"
-                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
                                                LineHeight="21" Margin="0,8,0,0" />
                                 </StackPanel>
                             </Border>
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="② 软件 与 框架" FontSize="14" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="② 软件 与 框架" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="软件是你点开用的东西；框架是藏在后面提供能力的，比如主题、登录、统计。软件自己不含框架，能力都是向框架要的 —— 所以装软件之前，它依赖的框架得先在。"
-                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
                                                LineHeight="21" Margin="0,8,0,0" />
                                     <TextBlock Text="想看装了哪些框架，去左边「框架」；桌面上的图标主要是软件和你自己装的应用。"
-                                               FontSize="11.5" Foreground="#7A8699" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
                                                LineHeight="18" Margin="0,8,0,0" />
                                 </StackPanel>
                             </Border>
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,10">
                                 <StackPanel>
-                                    <TextBlock Text="③ 怎么装东西" FontSize="14" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="③ 怎么装东西" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="最快：去「市场」挑一个官方包，点安装，等它自己下载校验装好。"
-                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
                                                LineHeight="21" Margin="0,8,0,0" />
                                     <TextBlock Text="也可以把 .pclpkg 直接拖进窗口；或者去「安装」页复制提示词给 AI，拿回一段脚本粘进来，跑完自动安装。卸载、覆盖、版本检查都由安装器兜着。"
-                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
                                                LineHeight="21" Margin="0,6,0,0" />
                                 </StackPanel>
                             </Border>
 
                             <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,18">
                                 <StackPanel>
-                                    <TextBlock Text="④ 装不上的时候" FontSize="14" FontWeight="SemiBold"
-                                               Foreground="#131A24" />
+                                    <TextBlock Text="④ 装不上的时候" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TrmInk}" />
                                     <TextBlock Text="点侧栏的「运行一次自检」，它会把模块清单、依赖、目录权限逐项过一遍，结果能一键复制成报告。"
-                                               FontSize="12.5" Foreground="#4A5563" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
                                                LineHeight="21" Margin="0,8,0,0" />
                                 </StackPanel>
                             </Border>
@@ -806,22 +1049,22 @@
                                         Style="{StaticResource GhostButton}" Click="BtnOpenMarket_Click" />
                             </StackPanel>
                             <TextBlock Text="以后想再看这页，点侧栏「新手引导」就行。"
-                                       FontSize="11" Foreground="#A7B0BE" Margin="0,12,0,0" />
+                                       FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}" Margin="0,12,0,0" />
                         </StackPanel>
                     </ScrollViewer>
-                </Grid>
+                    </Grid>
+                </Border>
 
                 <!-- 状态栏 -->
-                <Border Grid.Row="2" Background="#FBFCFE" BorderBrush="#E9EFF8" BorderThickness="0,1,0,0"
-                        Padding="20,0">
+                <Border Grid.Row="2" Background="{DynamicResource TrmShell}" Padding="20,0">
                     <Grid>
-                        <TextBlock x:Name="LabStatus" VerticalAlignment="Center" FontSize="11.5"
-                                   Foreground="#7A8699" TextTrimming="CharacterEllipsis" Text="好了" />
+                        <TextBlock x:Name="LabStatus" VerticalAlignment="Center" FontSize="{DynamicResource TrmTextMeta}"
+                                   Foreground="{DynamicResource TrmHelp}" TextTrimming="CharacterEllipsis" Text="好了" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="modules\  ·  logs\modules.log" FontSize="11" Foreground="#B6BFCC"
+                            <TextBlock Text="modules\  ·  logs\modules.log" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmFocusLine}"
                                        VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock x:Name="LabFooter" Text="基于 PCL 的 PCV" FontSize="11"
-                                       Foreground="#1370F3" Cursor="Hand" VerticalAlignment="Center"
+                            <TextBlock x:Name="LabFooter" Text="基于 PCL 的 PCV" FontSize="{DynamicResource TrmTextMeta}"
+                                       Foreground="{DynamicResource TrmAccent}" Cursor="Hand" VerticalAlignment="Center"
                                        MouseLeftButtonUp="Footer_Click" />
                         </StackPanel>
                     </Grid>

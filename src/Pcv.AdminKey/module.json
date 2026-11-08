@@ -1,0 +1,23 @@
+{
+  "id": "pcv.adminkey",
+  "name": "在线凭据",
+  "version": "3.0.0",
+  "assembly": "Pcv.AdminKey.dll",
+  "entry": "Pcv.AdminKey.Entry",
+  "category": "framework",
+  "dependencies": [
+    "pcv.core",
+    "pcv.api"
+  ],
+  "loadPriority": 70,
+  "author": "150311-ma",
+  "description": "每 10 分钟连一次服务器取当前凭证；凭证由服务端轮换，本地不生成、不落盘。",
+  "icon": "钥",
+  "accent": "#E0672E",
+  "desktop": false,
+  "tags": [
+    "在线",
+    "凭证",
+    "框架"
+  ]
+}

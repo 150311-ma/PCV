@@ -142,6 +142,12 @@ namespace Pcv.Shell
                 return;
             }
 
+            // TRM 外观必须赶在第一个窗口构造前：XAML 里的 DynamicResource
+            // 要在窗口加载时就解析到正确的一套令牌。--dark 供离屏渲染截图用。
+            _host.Services.TryGet(out Pcv.Modular.Contracts.ISettingsService trmSettings);
+            TrmThemeService.Initialize(trmSettings);
+            if (Array.IndexOf(e.Args, "--dark") >= 0) TrmThemeService.Apply(true);
+
             // 主题必须赶在窗口构造前应用：MainWindow 的构造函数会把当前主题读进下拉框与顶栏渐变
             var themeIndex = Array.IndexOf(e.Args, "--theme");
             if (themeIndex >= 0 && themeIndex + 1 < e.Args.Length &&
@@ -200,6 +206,11 @@ namespace Pcv.Shell
                 // 市场页是异步拉的，离屏渲染等不到；这里同步补一次，截图才有真实条目
                 if (page == "market") window.LoadMarketForRender();
             }
+
+            // 自动化验证：窗口构造完、XAML 已经解析过之后再换一次主题。
+            // 若界面误写成 StaticResource，这一下换不动，截图就会露馅。
+            if (Array.IndexOf(e.Args, "--switch-dark") >= 0)
+                TrmThemeService.Apply(true);
 
             // 离屏渲染：给自动化验证用，不弹窗、不需要人盯着，也能确认界面真的画出来了
             var renderIndex = Array.IndexOf(e.Args, "--render");

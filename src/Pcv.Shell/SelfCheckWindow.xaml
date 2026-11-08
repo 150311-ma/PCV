@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="运行一次自检" Height="620" Width="780" MinHeight="440" MinWidth="600"
-        WindowStyle="None" ResizeMode="CanResize" Background="#F6F8FC"
+        WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource TrmBg}"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+        FontFamily="{DynamicResource TrmFont}" FontSize="13">
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
@@ -16,9 +16,9 @@
             <Setter Property="Height" Value="34" />
             <Setter Property="Padding" Value="14,0" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="#4A5563" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#E1E9F5" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmInkMuted}" />
+            <Setter Property="Background" Value="{DynamicResource TrmSurface}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TrmLine}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -38,8 +38,8 @@
             <Setter Property="Height" Value="34" />
             <Setter Property="Padding" Value="18,0" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#1370F3" />
+            <Setter Property="Foreground" Value="{DynamicResource TrmSurface}" />
+            <Setter Property="Background" Value="{DynamicResource TrmAccent}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
@@ -55,7 +55,7 @@
         </Style>
 
         <DataTemplate x:Key="CheckItemTemplate">
-            <Border Background="White" BorderBrush="#E6EDF7" BorderThickness="1" CornerRadius="11"
+            <Border Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmHairline}" BorderThickness="1" CornerRadius="11"
                     Padding="14,12" Margin="0,0,0,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -67,8 +67,8 @@
                              Margin="0,5,12,0" />
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
-                                   Foreground="#131A24" />
-                        <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="#7A8699"
+                                   Foreground="{DynamicResource TrmInk}" />
+                        <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="{DynamicResource TrmHelp}"
                                    TextWrapping="Wrap" LineHeight="17" Margin="0,4,0,0" />
                     </StackPanel>
                     <Border Grid.Column="2" Background="{Binding StatePill}" CornerRadius="6"
@@ -91,18 +91,18 @@
         <!-- 标题栏 -->
         <Grid Grid.Row="0" Margin="18,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <TextBlock Text="运行一次自检" FontSize="13" FontWeight="SemiBold"
-                       VerticalAlignment="Center" Foreground="#131A24" />
-            <Button HorizontalAlignment="Right" Width="38" Height="28" Background="Transparent" Cursor="Hand"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TrmInk}" />
+            <Button HorizontalAlignment="Right" Width="38" Height="28" Background="{DynamicResource TrmTransparent}" Cursor="Hand"
                     Click="BtnClose_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
-                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="#4A5563" StrokeThickness="1.5"
+                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="Background" Value="#22E5484D" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmDangerSoft}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -111,12 +111,12 @@
         </Grid>
 
         <!-- 汇总 -->
-        <Border Grid.Row="1" Margin="18,0,18,12" Background="White" BorderBrush="#E6EDF7"
+        <Border Grid.Row="1" Margin="18,0,18,12" Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmHairline}"
                 BorderThickness="1" CornerRadius="13" Padding="16,14">
             <StackPanel>
                 <TextBlock x:Name="LabSummary" Text="正在检查…" FontSize="15" FontWeight="SemiBold"
-                           Foreground="#131A24" />
-                <TextBlock x:Name="LabConclusion" FontSize="11.5" Foreground="#7A8699"
+                           Foreground="{DynamicResource TrmInk}" />
+                <TextBlock x:Name="LabConclusion" FontSize="11.5" Foreground="{DynamicResource TrmHelp}"
                            TextWrapping="Wrap" LineHeight="18" Margin="0,6,0,0" />
             </StackPanel>
         </Border>
@@ -130,7 +130,7 @@
         <!-- 操作栏 -->
         <Grid Grid.Row="3" Margin="18,12,18,14">
             <TextBlock x:Name="LabHint" Text="装不上东西的时候点这里，报告能直接贴进 Issue。"
-                       VerticalAlignment="Center" FontSize="11.5" Foreground="#8A94A3"
+                       VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TrmHelp}"
                        TextWrapping="Wrap" MaxWidth="330" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="重新检查" Style="{StaticResource LocalGhost}" Margin="0,0,10,0"

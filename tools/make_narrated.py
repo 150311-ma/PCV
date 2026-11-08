@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""给宣传片配旁白和背景音乐，导出成片 + B 站版。
+"""给宣传片配旁白和背景音乐，导出有声成片。
 
 旁白：Microsoft Edge 的神经网络 TTS（zh-CN-XiaoxiaoNeural），本地合成、不依赖别人的音源。
-音乐：**自己合成的**。理由写在下面——从网上找曲子做商业投稿有版权风险，
-扒下来 B 站查重一撞一个准；这里用 numpy 生成一段原创垫底，版权干净。
+音乐：**自己合成的**。从网上找曲子做商业投稿有版权风险，B 站查重一撞一个准；
+这里用 numpy 生成一段原创垫底，没有采样、没有音源库，版权干净。
 
 节奏不是写死的 5 秒：每段的时长由那句旁白念完需要多久决定，字幕和画面跟着语音走。
+帧名单从 make_promo.frame_names() 取，镜头数改了这边不会悄悄少一段。
 """
 import asyncio
 import math
@@ -16,11 +17,12 @@ import wave
 
 import numpy as np
 import edge_tts
-from PIL import Image
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROMO = os.path.join(ROOT, "promo")
-AUDIO = os.path.join(ROOT, "audio")
+import promo_style as S
+from make_promo import frame_names
+
+PROMO = S.PROMO
+AUDIO = S.AUDIO
 SR = 48000
 FADE = 0.6
 LEAD = 0.9      # 每段旁白开念前留一点空
@@ -29,15 +31,22 @@ TAIL = 1.7      # 念完之后留的尾巴
 VOICE = "zh-CN-XiaoxiaoNeural"
 RATE = "-6%"
 
-# (帧, 旁白)
-LINES = [
-    ("frame-title.png", "这是我们做的 PCV，一个只负责装框架的壳。"),
-    ("frame-1.png", "第一页是软件。你自己装的那些，都在这儿。"),
-    ("frame-2.png", "框架在下面，按类别分好。基础框架只负责被调用，不给你打开。"),
-    ("frame-3.png", "装东西有三条路：拖包、挑文件，或者把 AI 给的脚本直接粘进来，跑完自己就装上了。"),
-    ("frame-4.png", "每个框架一个独立窗口，点开就能用，不用重启。"),
-    ("frame-outro.png", "拖一个包进来，就这么用。"),
+# 旁白原文，一条对一帧；顺序与 frame_names() 严格一致
+NARRATION = [
+    "这是我们做的 PCV，一个只负责装框架的壳。",
+    "打开就是应用桌面。你自己装的软件，都在这儿。",
+    "框架在后面，按类别排好。基础框架只负责被调用，不给你打开。",
+    "装东西有三条路：拖包、挑文件，或者把 AI 给的脚本直接粘进来，跑完自己就装上了。",
+    "市场里挑现成的官方包，点一下就下载、校验、装好，不用自己找地址。",
+    "浅色和深色共用一套设计令牌，切换的时候，不用重开窗口。",
+    "拖一个包进来，就这么用。",
 ]
+
+FRAMES = frame_names()
+if len(NARRATION) != len(FRAMES):
+    raise RuntimeError("旁白 %d 条、画面 %d 帧，对不上；改镜头时两边要一起改"
+                       % (len(NARRATION), len(FRAMES)))
+LINES = list(zip(FRAMES, NARRATION))
 
 
 def sh(args):
@@ -128,7 +137,7 @@ def soft_pad(seconds):
             tone = np.sin(2 * np.pi * chord[-1] * 2 * local) * decay * 0.12
             track[hit:hit_end] += tone
 
-    track /= max(1e-9, np.max(np.abs(track))) 
+    track /= max(1e-9, np.max(np.abs(track)))
     track *= 0.32
 
     stereo = np.stack([track, track], axis=1)

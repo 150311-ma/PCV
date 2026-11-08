@@ -61,7 +61,7 @@ namespace Pcv.Shell
             LabStatus.Text = result.Message;
             if (result.Success)
             {
-                Dot.Fill = new SolidColorBrush(Color.FromRgb(0x3D, 0xDC, 0x84));
+                Dot.Fill = Trm.Ok;
                 BtnInstall.IsEnabled = false;
                 BtnInstall.Content = "正在自动安装…";
 
@@ -70,7 +70,7 @@ namespace Pcv.Shell
             }
             else
             {
-                Dot.Fill = new SolidColorBrush(Color.FromRgb(0xF8, 0x51, 0x49));
+                Dot.Fill = Trm.Danger;
                 BtnInstall.IsEnabled = false;
                 BtnInstall.Content = "没装成";
             }
@@ -87,9 +87,7 @@ namespace Pcv.Shell
             BtnInstall.IsEnabled = false;
             BtnInstall.Content = success ? "已装好" : "安装失败";
             BtnInstall.Visibility = Visibility.Visible;
-            Dot.Fill = new SolidColorBrush(success
-                ? Color.FromRgb(0x3D, 0xDC, 0x84)
-                : Color.FromRgb(0xF8, 0x51, 0x49));
+            Dot.Fill = success ? Trm.Ok : Trm.Danger;
 
             // 装好了 1.5 秒自动关，不占着屏幕
             if (success)
