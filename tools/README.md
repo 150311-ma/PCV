@@ -20,6 +20,14 @@
 | `check_repo.py --inject-fault` | 注入 6 类已知故障，确认体检器自己会报红 | `python tools/check_repo.py --inject-fault` |
 | `check_trm_theme.py` | TRM 设计令牌体检：浅/深两套字典 key 对齐、界面 XAML 与 C# 无裸色、令牌引用有定义、颜色只用 DynamicResource | `python tools/check_trm_theme.py` |
 | `check_trm_theme.py --inject-fault` | 注入 5 类已知故障，确认主题体检器自己会报红 | `python tools/check_trm_theme.py --inject-fault` |
+| `build_integrity.py` | 给发布产物算 sha256 指纹清单（`integrity.json`），程序启动时对照 | `python tools/build_integrity.py` |
+| `build_integrity.py --check` | 只校验磁盘现状与清单一致 | `python tools/build_integrity.py --check` |
+| `build_integrity.py --inject-fault` | 注入 3 类已知故障，确认指纹校验器自己会报红 | `python tools/build_integrity.py --inject-fault` |
+| `check_security.py` | 安全系统体检：守卫四类检查齐全且被 `Inspect()` 调用、自检跑在模块加载之前、检出后弹窗并强制结束进程、ildasm 已屏蔽、Release 不带符号、指纹清单读写两端一致 | `python tools/check_security.py` |
+| `check_security.py --inject-fault` | 注入 7 类已知故障，确认安全体检器自己会报红 | `python tools/check_security.py --inject-fault` |
+| `module_code.py` | 模块数字算法（与 C# 端同一套）：id + 版本 + sha256 → `PCV-XXXX-XXXX-XXXX` | 被 `check_module_code.py` 与构建脚本 import，不单独跑 |
+| `check_module_code.py` | 模块数字与社区市场体检：金标准向量、手抄宽容规则、两端字母表一致、创作者工具与市场字段对得上、社区下载双路兜底 | `python tools/check_module_code.py` |
+| `check_module_code.py --inject-fault` | 注入 6 类已知故障，确认体检器自己会报红 | `python tools/check_module_code.py --inject-fault` |
 
 ## 需要注意的几点
 
@@ -41,6 +49,21 @@
   （以前两支都写 `PCV-B站版.mp4`，谁后跑谁盖掉谁）。
   帧名单只由 `make_promo.frame_names()` 生成一份，增减镜头时旁白条数会对不上并直接报错。
 - 配音用的是微软 Edge 的在线 TTS，**需要联网**；配乐是 numpy 现场合成的，不联网、无版权风险。
+- **`build_integrity.py` 必须在打包时对着「最终装出去的那份目录」算**，
+  不能对着 `bin/Release` 算：两份字节不一样，对着 bin 算出来的清单会让用户
+  第一次启动就看到「文件被改过」。`build_installer.py` 已经接在 stage 之后算。
+  另外壳里的校验会跳过「比清单还新」的文件，否则本地重新编译一次就会自己拦自己。
+- `check_security.py` 检查的是「安全系统真的接上了」，不是「代码里有没有出现某个词」：
+  比如它会确认 `Inspect()` 里真的调到了四类检查，而不是只在注释里提了名字。
+  这类检查最容易被注释骗过，所以反向注入专门覆盖了「属性被删掉但说明文字还在」。
+- **模块数字的算法有两份实现**（`module_code.py` 与 `src/Pcv.Modular.Packages/ModuleCode.cs`），
+  这是**故意**的重复：创作者工具是 C#、构建脚本是 Python，绕不开。
+  代价是「改了一边忘了另一边」，所以 `check_module_code.py` 用一组金标准向量
+  把两边钉在一起。那些向量是契约、不是「跑一遍看输出」生成的 —— 想改算法，
+  就得同时改两端实现 + 向量，三处都动了闸门才绿。
+- `check_module_code.py --inject-fault` 里有一步容易被忽略：每轮注入后**必须
+  重新 import** `module_code`。第一版没有 reload，改的是磁盘上的文件、查的是
+  内存里的旧模块，于是「注入故障」全被当成通过 —— 那是假验证。
 
 ## 不在这里的脚本
 

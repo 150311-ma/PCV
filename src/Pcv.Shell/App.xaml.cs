@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using Pcv.Modular.Host;
@@ -36,6 +37,10 @@ namespace Pcv.Shell
             AppDomain.CurrentDomain.UnhandledException += (s, args) => LogCrash(args.ExceptionObject as Exception);
 
             var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            // 安全自检必须赶在任何模块被加载之前：
+            // 一旦第三方程序集进了进程，再判断「有没有被塞东西」就晚了。
+            SecurityGuard.Initialize();
 
             // 命令行跑构建脚本：界面之外也能验"拖进来会怎样"
             var buildIndex = Array.IndexOf(e.Args, "--build");
@@ -100,6 +105,63 @@ namespace Pcv.Shell
                 Shutdown(ok && prompt.Length > 500 ? 0 : 2);
                 return;
             }
+            // 创作者工具的离屏渲染：确认这个窗口真的画出来了。--creator <包路径>
+            var creatorIndex = Array.IndexOf(e.Args, "--creator");
+            if (creatorIndex >= 0)
+            {
+                var creatorWindow = new CreatorWindow();
+                MainWindow = creatorWindow;
+                var target = creatorIndex + 2 < e.Args.Length
+                    ? e.Args[creatorIndex + 2]
+                    : Path.Combine(baseDirectory, "creator.png");
+                if (creatorIndex + 1 < e.Args.Length)
+                    creatorWindow.LoadPackageForRender(e.Args[creatorIndex + 1]);
+                try
+                {
+                    RenderToFile(creatorWindow, target, 820, 700);
+                    Console.WriteLine("已渲染：" + target);
+                    Shutdown(0);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("渲染失败：" + ex);
+                    Shutdown(2);
+                }
+                return;
+            }
+
+            // 安全告警窗口的离屏渲染：用来确认它真的画出来了、内容没被裁掉。
+            // 只在显式指定时走，正常启动不会出现这个窗口。
+            var alertIndex = Array.IndexOf(e.Args, "--render-alert");
+            if (alertIndex >= 0)
+            {
+                var target = alertIndex + 1 < e.Args.Length
+                    ? e.Args[alertIndex + 1]
+                    : Path.Combine(baseDirectory, "alert.png");
+                var sample = new List<Threat>
+                {
+                    new Threat(ThreatLevel.Fatal, "PCV 的文件被改过",
+                        "下面这些文件的指纹和发布时对不上：\n"
+                        + "modules/pcv.core/Pcv.Core.dll（内容变了）\n"
+                        + "请从官方渠道重新下载 PCV。"),
+                    new Threat(ThreatLevel.Fatal, "检测到远程调试器",
+                        "另一个进程正连着 PCV 做调试。请关掉那个程序再启动。"),
+                };
+                var alertWindow = new SecurityAlertWindow(sample);
+                try
+                {
+                    RenderToFile(alertWindow, target, 600, 600);
+                    Console.WriteLine("已渲染：" + target);
+                    Shutdown(0);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("渲染失败：" + ex);
+                    Shutdown(2);
+                }
+                return;
+            }
+
             var modulesDirectory = Path.Combine(baseDirectory, "modules");
 
             // 上次因为"模块正在跑、文件被占用"而排队的安装，在这里换上。
@@ -205,6 +267,14 @@ namespace Pcv.Shell
                 window.ShowViewForRender(page);
                 // 市场页是异步拉的，离屏渲染等不到；这里同步补一次，截图才有真实条目
                 if (page == "market") window.LoadMarketForRender();
+                // --community 让市场走 GitHub 源，验证社区搜索这条路
+                if (page == "market" && Array.IndexOf(e.Args, "--community") >= 0)
+                {
+                    var keywordIndex = Array.IndexOf(e.Args, "--keyword");
+                    var keyword = keywordIndex >= 0 && keywordIndex + 1 < e.Args.Length
+                        ? e.Args[keywordIndex + 1] : null;
+                    window.LoadCommunityForRender(keyword);
+                }
             }
 
             // 自动化验证：窗口构造完、XAML 已经解析过之后再换一次主题。

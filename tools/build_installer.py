@@ -88,6 +88,22 @@ def stage_files():
     print("  摆好 %d 项，%d 个模块" % (copied, len([p for p in modules.iterdir() if p.is_dir()])))
 
 
+def write_integrity():
+    """按摆好的 stage 目录算文件指纹。
+
+    必须在这里算：stage 里才是最终要装出去的字节。算早了（对着 bin 算）
+    会和装到用户机器上的对不上，启动时就会误报「文件被改过」。
+    """
+    sys.path.insert(0, str(MODULAR / "tools"))
+    import build_integrity
+    document = build_integrity.build(STAGE)
+    if not document["files"]:
+        print("  stage 里没有可比对的文件，跳过指纹清单")
+        return
+    (STAGE / build_integrity.MANIFEST_NAME).write_bytes(build_integrity.manifest_bytes(document))
+    print("  指纹清单：%d 个文件" % len(document["files"]))
+
+
 def make_payload():
     if PAYLOAD.exists():
         PAYLOAD.unlink()
@@ -127,16 +143,19 @@ def build_setup():
 
 
 def main():
-    print("[1/4] Release 构建")
+    print("[1/5] Release 构建")
     run(["dotnet", "build", str(MODULAR / "Pcv.sln"), "-c", "Release", "-v:q"])
 
-    print("[2/4] 摆待安装目录")
+    print("[2/5] 摆待安装目录")
     stage_files()
 
-    print("[3/4] 打 payload.zip")
+    print("[3/5] 算文件指纹")
+    write_integrity()
+
+    print("[4/5] 打 payload.zip")
     make_payload()
 
-    print("[4/4] 编译安装器")
+    print("[5/5] 编译安装器")
     output = build_setup()
 
     shutil.rmtree(STAGE, ignore_errors=True)

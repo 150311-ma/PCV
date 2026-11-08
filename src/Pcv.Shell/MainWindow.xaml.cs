@@ -49,6 +49,14 @@ namespace Pcv.Shell
         private bool _adminBusy;
         private string _unlockKey = "";
 
+        /// <summary>市场当前看的是哪一边：官方（博客）还是 GitHub（社区）。</summary>
+        private MarketSource _marketSource = MarketSource.Official;
+
+        private enum MarketSource { Official, GitHub }
+
+        /// <summary>创作者工具要读写本地设置，走这个。</summary>
+        public ISettingsService Settings => _settings;
+
         public ModuleLoadReport CurrentReport => _report;
 
         public MainWindow(ModuleHost host, ModuleLoadReport report)
@@ -496,6 +504,36 @@ namespace Pcv.Shell
             catch (Exception ex) { LabMarketStatus.Text = "读取市场出错：" + ex.Message; SetMarketWarning(); }
         }
 
+        /// <summary>
+        /// 给 --render --community 用：同步走一遍 GitHub 源，验证社区搜索这条路。
+        /// 同步等待是刻意的 —— 截图脚本等不到异步回来。
+        /// </summary>
+        public void LoadCommunityForRender(string keyword)
+        {
+            try
+            {
+                SetMarketSource(MarketSource.GitHub);
+                if (!string.IsNullOrWhiteSpace(keyword)) TxtSearch.Text = keyword;
+
+                var items = GitHubSource.SearchAsync(keyword).GetAwaiter().GetResult();
+                _market.Clear();
+                foreach (var item in items) _market.Add(new MarketCard(item));
+
+                LabMarketStatus.Text = GitHubSource.LastNote;
+                if (items.Count == 0) SetMarketWarning();
+                LabNoMarket.Visibility = _market.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                LabMarketSource.Text =
+                    "社区来源：GitHub 上带 pcv-module 标记的仓库，每个仓库根目录有一份 "
+                    + GitHubSource.ManifestName + "。PCV 不存任何模块文件。";
+                RefreshMarketStates();
+            }
+            catch (Exception ex)
+            {
+                LabMarketStatus.Text = "去 GitHub 找的时候出错：" + ex.Message;
+                SetMarketWarning();
+            }
+        }
+
         private void SetMarketWarning()
         {
             Use(PanMarketStatus, Border.BackgroundProperty, "TrmWarnSoft");
@@ -506,7 +544,109 @@ namespace Pcv.Shell
         private void BtnMarketRefresh_Click(object sender, RoutedEventArgs e)
         {
             _market.Clear();
+            if (_marketSource == MarketSource.GitHub) LoadGitHubMarketAsync(TxtSearch.Text);
+            else LoadMarketAsync();
+        }
+
+        // ── 市场来源切换：官方（博客）/ GitHub（社区）──────────────────────
+        //
+        // 为什么默认官方：社区来源要发 GitHub 搜索请求，配额有限（一分钟十几次），
+        // 不该因为用户点进市场就自动消耗。切过去才发。
+
+        private void BtnSourceOfficial_Click(object sender, RoutedEventArgs e)
+        {
+            SetMarketSource(MarketSource.Official);
+            _market.Clear();
             LoadMarketAsync();
+        }
+
+        private void BtnSourceGitHub_Click(object sender, RoutedEventArgs e)
+        {
+            SetMarketSource(MarketSource.GitHub);
+            _market.Clear();
+            LoadGitHubMarketAsync(TxtSearch.Text);
+        }
+
+        private void SetMarketSource(MarketSource source)
+        {
+            _marketSource = source;
+            var github = source == MarketSource.GitHub;
+
+            BtnSourceOfficial.Style = (Style)FindResource(github ? "GhostButton" : "PrimaryButton");
+            BtnSourceGitHub.Style = (Style)FindResource(github ? "PrimaryButton" : "GhostButton");
+            PanSearch.Visibility = github ? Visibility.Visible : Visibility.Collapsed;
+            LabSearchHint.Visibility = string.IsNullOrEmpty(TxtSearch.Text)
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return)
+            {
+                _market.Clear();
+                LoadGitHubMarketAsync(TxtSearch.Text);
+            }
+        }
+
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (LabSearchHint == null) return;
+            LabSearchHint.Visibility = string.IsNullOrEmpty(TxtSearch.Text)
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void LoadGitHubMarketAsync(string keyword)
+        {
+            if (_marketLoading) return;
+            _marketLoading = true;
+            LabMarketStatus.Text = string.IsNullOrWhiteSpace(keyword)
+                ? "正在去 GitHub 上找社区模块…"
+                : "正在 GitHub 上搜「" + keyword.Trim() + "」…";
+            Use(PanMarketStatus, Border.BackgroundProperty, "TrmAccentSoft");
+            Use(PanMarketStatus, Border.BorderBrushProperty, "TrmLine");
+            Use(LabMarketStatus, TextElement.ForegroundProperty, "TrmInkMuted");
+
+            try
+            {
+                var items = await GitHubSource.SearchAsync(keyword);
+                _market.Clear();
+                foreach (var item in items) _market.Add(new MarketCard(item));
+
+                LabMarketStatus.Text = GitHubSource.LastNote;
+                if (items.Count == 0) SetMarketWarning();
+                LabNoMarket.Visibility = _market.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                LabNoMarket.Text = string.IsNullOrWhiteSpace(keyword)
+                    ? "GitHub 上暂时没搜到社区模块。"
+                    : "没有找到叫「" + keyword.Trim() + "」的模块。换个名字，或者自己做 one 发上去。";
+                LabMarketSource.Text =
+                    "社区来源：GitHub 上带 pcv-module 标记的仓库，每个仓库根目录有一份 "
+                    + GitHubSource.ManifestName + "。PCV 不存任何模块文件。";
+                RefreshMarketStates();
+                SetStatus("社区模块 " + items.Count + " 个");
+            }
+            catch (Exception ex)
+            {
+                LabMarketStatus.Text = "去 GitHub 找的时候出错：" + ex.Message;
+                SetMarketWarning();
+            }
+            finally
+            {
+                _marketLoading = false;
+            }
+        }
+
+        private void BtnCreator_Click(object sender, RoutedEventArgs e)
+        {
+            new CreatorWindow(() => { /* 发完不自动切源，用户自己去市场看 */ })
+            { Owner = this, ShowInTaskbar = true }.ShowDialog();
+        }
+
+        /// <summary>创作者工具发完包后跳回市场（GitHub 源）。</summary>
+        public void ShowMarketForCreator()
+        {
+            ShowView("market");
+            SetMarketSource(MarketSource.GitHub);
+            LoadGitHubMarketAsync("");
         }
 
         private void FillMarket(MarketCatalog catalog, string origin)

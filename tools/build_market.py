@@ -144,7 +144,15 @@ def verify(root, index, problems):
         on_disk = json.loads(index_path.read_text(encoding="utf-8"))
     except (ValueError, OSError) as error:
         return [f"market/index.json 读不出来：{error}"]
-    if on_disk != index:
+
+    # `updated` 是「哪天生成的」，不是内容的一部分 —— 比对时必须排除它。
+    # 否则同一个仓库在两台时区不同的机器上永远对不上：本地已跨日、CI 还在昨天，
+    # 于是「重跑本脚本」来回改一整天，改完还是红。
+    # 真正该盯的是条目本身：size / sha256 / version 有没有跟着 dist 变。
+    def content_only(document):
+        return {key: value for key, value in document.items() if key != "updated"}
+
+    if content_only(on_disk) != content_only(index):
         local.append("market/index.json 与 dist 现状不一致，重跑本脚本")
     # 即使整体不一致，也要把具体是哪项坏了说出来：
     # 「一句话概括」对修问题没用，定位到字段才有用。
@@ -252,8 +260,10 @@ def inject_fault():
         backup = target.read_bytes()
         try:
             target.write_bytes(mutate(backup))
-            _, problems = build(probe)
-            issues = verify(probe, json.loads(target.read_text(encoding="utf-8")), problems)
+            # 基准必须是「按 dist 现场算出来的那份」，不能拿被改过的文件当基准 ——
+            # 那样两边永远相等，内容类故障一个都抓不到（第一版就是这么假通过的）。
+            expected, problems = build(probe)
+            issues = verify(probe, expected, problems)
             hit = any(keyword in issue for issue in issues)
             results.append((name, hit, "" if hit else "没报这一项：" + " | ".join(issues)[:180]))
         finally:
@@ -274,9 +284,27 @@ def inject_fault():
         obj["items"][0]["file"] = "https://example.com/evil.pclpkg"
         return json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8")
 
+    def bad_version(data):
+        obj = json.loads(data.decode("utf-8"))
+        obj["items"][0]["version"] = "0.0.1"
+        return json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8")
+
+    def newer_date(data):
+        # 只改 updated 是**允许**的：它表示「哪天生成的」，两地时区不同必然不一致。
+        # 这一项确认「排除 updated 之后，其余字段仍然会被比对」——
+        # 也就是确认我们只是放过日期，没有把整个内容比对一起放过。
+        obj = json.loads(data.decode("utf-8"))
+        obj["updated"] = "1999-01-01"
+        obj["items"][0]["version"] = "0.0.1"
+        return json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8")
+
     scene("校验和被改会报红", bad_hash, "sha256")
     scene("大小被改会报红", bad_size, "size")
     scene("file 拼成外部 URL 会报红", bad_file, "file 字段不合法")
+    scene("版本被改会报红", bad_version, "与 dist 现状不一致")
+    # 最后这项是关键：改了 updated 同时又改了内容，必须还能抓到 ——
+    # 证明「放过日期」不等于「放过内容」
+    scene("只改日期不报红、但同时改了内容要报红", newer_date, "与 dist 现状不一致")
 
     shutil.rmtree(probe.parent, ignore_errors=True)
     print("== 市场清单校验器反向验证（注入已知故障） ==")
