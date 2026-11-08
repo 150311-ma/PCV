@@ -85,7 +85,7 @@ namespace Pcv.Shell
         public bool Navigate(string view)
         {
             if (_window == null || string.IsNullOrWhiteSpace(view)) return false;
-            var allowed = new[] { "home", "install", "frameworks", "market", "credits", "onboarding" };
+            var allowed = new[] { "home", "install", "frameworks", "market", "credits", "onboarding", "admin" };
             if (Array.IndexOf(allowed, view) < 0) return false;
             try
             {

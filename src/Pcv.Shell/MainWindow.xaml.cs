@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using Pcv.Modular.Abstractions;
@@ -32,12 +34,20 @@ namespace Pcv.Shell
         private readonly ObservableCollection<FrameworkCard> _software = new ObservableCollection<FrameworkCard>();
         private readonly ObservableCollection<FrameworkCard> _desktop = new ObservableCollection<FrameworkCard>();
         private readonly ObservableCollection<MarketCard> _market = new ObservableCollection<MarketCard>();
+        private readonly ObservableCollection<EndpointCard> _endpoints = new ObservableCollection<EndpointCard>();
         private readonly MarketService _marketService;
         private readonly ISettingsService _settings;
+        private readonly AdminService _admin;
+        private readonly UpdateService _updates;
+        private readonly IApiGateway _gateway;
+        private readonly IAdminKeyProvider _adminKey;
         private ModuleLoadReport _report;
         private MarketCatalog _catalog;
         private bool _marketLoading;
         private bool _iconsMode = true;
+        private bool _adminUnlocked;
+        private bool _adminBusy;
+        private string _unlockKey = "";
 
         public ModuleLoadReport CurrentReport => _report;
 
@@ -50,21 +60,40 @@ namespace Pcv.Shell
             _installer = new PackageInstaller(host.ModulesDirectory, host.Log);
             _accessor = new ModuleHostAccessor(host);
             host.Services.TryGet(out _settings);
+            host.Services.TryGet(out _gateway);
+            host.Services.TryGet(out _adminKey);
             _marketService = new MarketService(
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCLData"));
+            _admin = new AdminService(_marketService, _settings, _gateway);
+            _updates = new UpdateService(host.Host.Version, _gateway);
 
             ListFrameworks.ItemsSource = _frameworks;
             ListSoftware.ItemsSource = _software;
             GridDesktop.ItemsSource = _desktop;
             ListMarket.ItemsSource = _market;
+            ListAdminEndpoints.ItemsSource = _endpoints;
             LabVersion.Text = "PCV " + host.Host.Version;
             LabMarketSource.Text = "服务端：" + MarketService.MarketUrl;
+            TxtAdminAccessKey.Text = _gateway?.AccessKey ?? "";
+
+            TrmThemeService.ThemeChanged += OnTrmThemeChanged;
+            if (_gateway != null) _gateway.Changed += _ => OnUi(RefreshEndpoints);
+            if (_adminKey != null) _adminKey.KeyChanged += _ => OnUi(OnAdminKeyChanged);
+            RefreshAdminKeyView();
+            RefreshEndpoints();
+            SyncMarketToggle();
+            RefreshThemeButtons();
 
             RefreshModules();
             ApplyViewMode();
             ShowView(IsOnboardingDone() ? "home" : "onboarding");
 
-            Loaded += (s, e) => GlassHelper.TryEnableRoundedCorners(this);
+            Loaded += async (s, e) =>
+            {
+                GlassHelper.TryEnableRoundedCorners(this);
+                // 启动就悄悄问一次：有新版本才在桌面顶上挂一条提示，不打扰、不下载。
+                await CheckUpdateAsync(false);
+            };
         }
 
         // ── 新手引导 ────────────────────────────────────────────────────────
@@ -213,10 +242,8 @@ namespace Pcv.Shell
         {
             GridDesktop.Visibility = _iconsMode ? Visibility.Visible : Visibility.Collapsed;
             ListSoftware.Visibility = _iconsMode ? Visibility.Collapsed : Visibility.Visible;
-            var active = new SolidColorBrush(Color.FromRgb(0x13, 0x70, 0xF3));
-            var idle = new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63));
-            BtnViewIcons.Foreground = _iconsMode ? active : idle;
-            BtnViewList.Foreground = _iconsMode ? idle : active;
+            Use(BtnViewIcons, TextElement.ForegroundProperty, _iconsMode ? "TrmAccent" : "TrmInkMuted");
+            Use(BtnViewList, TextElement.ForegroundProperty, _iconsMode ? "TrmInkMuted" : "TrmAccent");
         }
 
         private void BtnOpenMarket_Click(object sender, RoutedEventArgs e) => ShowView("market");
@@ -227,14 +254,15 @@ namespace Pcv.Shell
             var template = (DataTemplate)FindResource("FrameworkCardTemplate");
 
             var panel = new StackPanel { Margin = new Thickness(0, 20, 0, 0) };
-            panel.Children.Add(new TextBlock
+            var heading = new TextBlock
             {
                 Text = label + "（" + cards.Count + " 个）",
                 FontSize = 11.5,
                 FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x9A, 0xA4, 0xB2)),
                 Margin = new Thickness(2, 0, 0, 8)
-            });
+            };
+            Use(heading, TextElement.ForegroundProperty, "TrmMeta");
+            panel.Children.Add(heading);
             panel.Children.Add(new ItemsControl { ItemsSource = cards, ItemTemplate = template });
             return panel;
         }
@@ -268,12 +296,23 @@ namespace Pcv.Shell
             }
         }
 
+        /// <summary>运行时会换主题的状态色必须绑到资源引用，一次性取 Brush 会留在旧主题里。</summary>
+        private static void Use(FrameworkElement element, DependencyProperty property, string key)
+            => element.SetResourceReference(property, key);
+
+        private void OnTrmThemeChanged(bool dark)
+        {
+            // 卡片状态色是绑定 getter 取的一次性 Brush，换主题后重建一次列表即可
+            RefreshModules();
+            RefreshEndpoints();
+            ApplyViewMode();
+            RefreshThemeButtons();
+        }
+
         private void SetStatus(string message, bool isError = false)
         {
             LabStatus.Text = message;
-            LabStatus.Foreground = isError
-                ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
-                : new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63));
+            Use(LabStatus, TextElement.ForegroundProperty, isError ? "TrmDanger" : "TrmInkMuted");
         }
 
         // ── 两页切换 ────────────────────────────────────────────────────────
@@ -381,6 +420,7 @@ namespace Pcv.Shell
             ViewAdd.Visibility = view == "install" ? Visibility.Visible : Visibility.Collapsed;
             ViewFrameworks.Visibility = view == "frameworks" ? Visibility.Visible : Visibility.Collapsed;
             ViewMarket.Visibility = view == "market" ? Visibility.Visible : Visibility.Collapsed;
+            ViewAdmin.Visibility = view == "admin" ? Visibility.Visible : Visibility.Collapsed;
             ViewOnboarding.Visibility = view == "onboarding" ? Visibility.Visible : Visibility.Collapsed;
             ViewCredits.Visibility = view == "credits" ? Visibility.Visible : Visibility.Collapsed;
 
@@ -388,10 +428,12 @@ namespace Pcv.Shell
             Highlight(NavInstall, view == "install");
             Highlight(NavFrameworks, view == "frameworks");
             Highlight(NavMarket, view == "market");
+            Highlight(NavAdmin, view == "admin");
             Highlight(NavCredits, view == "credits");
 
             if (view == "frameworks") RefreshModules();
             if (view == "market") LoadMarketAsync();
+            if (view == "admin") { RefreshAdminKeyView(); RefreshEndpoints(); SyncMarketToggle(); }
         }
 
         // ── 市场 ────────────────────────────────────────────────────────────
@@ -401,9 +443,9 @@ namespace Pcv.Shell
             if (_marketLoading) return;
             _marketLoading = true;
             LabMarketStatus.Text = "正在读取市场…";
-            PanMarketStatus.Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF5, 0xFF));
-            PanMarketStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(0xD7, 0xE3, 0xF4));
-            LabMarketStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x55, 0x63));
+            Use(PanMarketStatus, Border.BackgroundProperty, "TrmAccentSoft");
+            Use(PanMarketStatus, Border.BorderBrushProperty, "TrmLine");
+            Use(LabMarketStatus, TextElement.ForegroundProperty, "TrmInkMuted");
 
             try
             {
@@ -456,9 +498,9 @@ namespace Pcv.Shell
 
         private void SetMarketWarning()
         {
-            PanMarketStatus.Background = new SolidColorBrush(Color.FromRgb(0xFF, 0xF8, 0xEC));
-            PanMarketStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF3, 0xDD, 0xB0));
-            LabMarketStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x8A, 0x5B, 0x00));
+            Use(PanMarketStatus, Border.BackgroundProperty, "TrmWarnSoft");
+            Use(PanMarketStatus, Border.BorderBrushProperty, "TrmWarnSoft");
+            Use(LabMarketStatus, TextElement.ForegroundProperty, "TrmWarnInk");
         }
 
         private void BtnMarketRefresh_Click(object sender, RoutedEventArgs e)
@@ -558,12 +600,8 @@ namespace Pcv.Shell
         private static void Highlight(System.Windows.Controls.Button button, bool selected)
         {
             if (button == null) return;
-            button.Background = new System.Windows.Media.SolidColorBrush(
-                selected ? System.Windows.Media.Color.FromArgb(0x26, 0x13, 0x70, 0xF3)
-                         : System.Windows.Media.Colors.Transparent);
-            button.Foreground = new System.Windows.Media.SolidColorBrush(
-                selected ? System.Windows.Media.Color.FromRgb(0x13, 0x70, 0xF3)
-                         : System.Windows.Media.Color.FromRgb(0x5B, 0x64, 0x72));
+            Use(button, Control.BackgroundProperty, selected ? "TrmAccentSoft" : "TrmTransparent");
+            Use(button, Control.ForegroundProperty, selected ? "TrmAccent" : "TrmInkMuted");
             button.FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal;
         }
 
@@ -765,13 +803,9 @@ namespace Pcv.Shell
 
         private void SetDropZoneActive(bool active)
         {
-            DropZone.BorderBrush = new SolidColorBrush(active
-                ? Color.FromRgb(0x13, 0x70, 0xF3)
-                : Color.FromRgb(0xD7, 0xE3, 0xF4));
+            Use(DropZone, Border.BorderBrushProperty, active ? "TrmAccent" : "TrmLine");
             DropZone.BorderThickness = new Thickness(active ? 2 : 1.5);
-            DropZone.Background = new SolidColorBrush(active
-                ? Color.FromRgb(0xEF, 0xF5, 0xFF)
-                : Colors.White);
+            Use(DropZone, Border.BackgroundProperty, active ? "TrmAccentSoft" : "TrmSurface");
         }
 
         private void ResetDropZone()
@@ -954,15 +988,7 @@ namespace Pcv.Shell
                     var color = ParseColor(Accent);
                     if (color == null)
                     {
-                        var palette = new[]
-                        {
-                            System.Windows.Media.Color.FromRgb(0x13, 0x70, 0xF3),
-                            System.Windows.Media.Color.FromRgb(0x7A, 0x5A, 0xF8),
-                            System.Windows.Media.Color.FromRgb(0x0E, 0x9F, 0x6E),
-                            System.Windows.Media.Color.FromRgb(0xF2, 0x7A, 0x54),
-                            System.Windows.Media.Color.FromRgb(0x1C, 0x9C, 0xC4),
-                            System.Windows.Media.Color.FromRgb(0xD6, 0x4B, 0x8B)
-                        };
+                        var palette = Trm.ArtColors;
                         var hash = 0;
                         foreach (var c in Id ?? Name ?? "") hash = (hash * 31 + c) & 0x7FFFFFFF;
                         color = palette[hash % palette.Length];
@@ -996,20 +1022,12 @@ namespace Pcv.Shell
             {
                 var state = State ?? "";
                 if (state.Contains("失败") || state.Contains("错"))
-                    return Solid(background, 0xFD, 0xEC, 0xEC, 0xB4, 0x23, 0x2E);
+                    return background ? Trm.DangerSoft : Trm.DangerInk;
                 if (state.Contains("运行中") || state.Contains("已装载") || state.Contains("安装"))
-                    return Solid(background, 0xEA, 0xF7, 0xEE, 0x1B, 0x8A, 0x4B);
-                return Solid(background, 0xF1, 0xF4, 0xF8, 0x6B, 0x76, 0x88);
+                    return background ? Trm.OkSoft : Trm.OkInk;
+                return background ? Trm.Chip : Trm.ChipInk;
             }
 
-            private static System.Windows.Media.Brush Solid(bool background, byte br, byte bg, byte bb,
-                byte fr, byte fg, byte fb)
-            {
-                var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(
-                    background ? br : fr, background ? bg : fg, background ? bb : fb));
-                brush.Freeze();
-                return brush;
-            }
         }
 
         /// <summary>市场卡片的可绑定包装：数据来自清单，状态来自本机已装模块。</summary>
@@ -1036,7 +1054,7 @@ namespace Pcv.Shell
                 get
                 {
                     var color = FrameworkCard.ParseColor(Item.Accent)
-                                ?? System.Windows.Media.Color.FromRgb(0x13, 0x70, 0xF3);
+                                ?? Trm.ColorOf("TrmAccent");
                     var brush = new System.Windows.Media.SolidColorBrush(color);
                     brush.Freeze();
                     return brush;
@@ -1074,6 +1092,335 @@ namespace Pcv.Shell
             public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
             private void Changed(string name) => PropertyChanged?.Invoke(this,
                 new System.ComponentModel.PropertyChangedEventArgs(name));
+        }
+
+        // ── 服务设置 ────────────────────────────────────────────────────
+        // 凭证由服务端每 10 分钟轮换，本地不生成、不落盘；解锁只认「当前这一把」，
+        // 凭证一换（或断网）就自动退出，避免输过一次就一直是维护状态。
+        // 市场的开关是本地设置：关掉后这台机器一次线上请求都不发。
+
+        private void OnUi(Action action)
+        {
+            if (Dispatcher.CheckAccess()) { action(); return; }
+            try { Dispatcher.Invoke(action); } catch { /* 窗口已关，晚到的事件丢掉 */ }
+        }
+
+        private void SyncMarketToggle()
+            => BtnAdminToggleMarket.Content = _admin.MarketEnabled ? "关闭市场" : "开启市场";
+
+        private void RefreshAdminKeyView()
+        {
+            var info = _adminKey?.Current;
+            if (info == null)
+            {
+                LabAdminKey.Text = "—— —— ——";
+                LabAdminKeyExpire.Text = "凭据模块没加载";
+                LabAdminKeyError.Text = "";
+                return;
+            }
+            LabAdminKey.Text = info.Online ? info.Key : "—— —— ——";
+            LabAdminKeyExpire.Text = info.Online
+                ? info.ExpiresText + " 后更换 · 服务器时间 " + info.ServerTime
+                : "等服务器回来再试";
+            LabAdminKeyError.Text = info.Online ? "" : "取不到凭证：" + info.Error;
+        }
+
+        private void OnAdminKeyChanged()
+        {
+            RefreshAdminKeyView();
+            if (!_adminUnlocked) return;
+            var info = _adminKey?.Current;
+            if (info == null || !info.Online || !string.Equals(info.Key, _unlockKey, StringComparison.Ordinal))
+            {
+                LockAdmin(info != null && info.Online
+                    ? "服务器换了凭据，维护模式已自动退出，请用新凭据重新解锁"
+                    : "服务器断了，维护模式已自动退出");
+                return;
+            }
+            LabAdminRemain.Text = "当前凭证还有 " + info.ExpiresText + " 有效";
+        }
+
+        private void LockAdmin(string reason)
+        {
+            _adminUnlocked = false;
+            _unlockKey = "";
+            PanAdminLocked.Visibility = Visibility.Visible;
+            PanAdminUnlocked.Visibility = Visibility.Collapsed;
+            PanAdminTools.IsEnabled = false;
+            LabAdminAction.Text = reason;
+            SetStatus(reason, true);
+        }
+
+        private void RefreshEndpoints()
+        {
+            _endpoints.Clear();
+            if (_gateway == null)
+            {
+                LabAdminApiInfo.Text = "API 接口模块没加载，接口表暂时是空的";
+                return;
+            }
+            LabAdminApiInfo.Text = "服务端 " + _gateway.Site + " · " + _gateway.Endpoints.Count
+                + " 个接口 · 接入密钥" + (string.IsNullOrEmpty(_gateway.AccessKey) ? "未设置" : "已设置");
+            foreach (var ep in _gateway.Endpoints) _endpoints.Add(new EndpointCard(ep));
+        }
+
+        // ── 外观（TRM 浅色 / 深色两套令牌）────────────────────────────────
+
+        private void RefreshThemeButtons()
+        {
+            var dark = TrmThemeService.IsDark;
+            BtnThemeLight.IsEnabled = dark;
+            BtnThemeDark.IsEnabled = !dark;
+            // 标题栏那个字表示「点一下会切到哪一套」，不是当前是哪一套
+            LabThemeToggle.Text = dark ? "浅" : "深";
+            BtnThemeToggle.ToolTip = dark ? "切到浅色外观" : "切到深色外观";
+            LabThemeState.Text = (dark ? "深色" : "浅色")
+                + " · 颜色只从设计令牌取，换主题不用重开窗口";
+        }
+
+        private void BtnThemeToggle_Click(object sender, RoutedEventArgs e)
+        {
+            TrmThemeService.Apply(!TrmThemeService.IsDark, _settings);
+            RefreshThemeButtons();
+            SetStatus(TrmThemeService.IsDark ? "已切到深色" : "已切到浅色");
+        }
+
+        // ── 维护入口：不在导航里，也没有任何提示 ──────────────────────────────
+        // 版本号连点 5 次（两次间隔不超过 1.5 秒）才进得去。普通用户不会去连点
+        // 一个版本号，界面上也不会出现任何维护入口的字样。
+        private int _versionTaps;
+        private DateTime _lastVersionTap = DateTime.MinValue;
+
+        private void VersionBadge_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;   // 别把这一下当成拖标题栏
+            var now = DateTime.Now;
+            _versionTaps = (now - _lastVersionTap).TotalSeconds <= 1.5 ? _versionTaps + 1 : 1;
+            _lastVersionTap = now;
+            if (_versionTaps < 5) return;
+            _versionTaps = 0;
+            ShowView("admin");
+        }
+
+        private void BtnThemeLight_Click(object sender, RoutedEventArgs e)
+        {
+            TrmThemeService.Apply(false, _settings);
+            RefreshThemeButtons();
+            SetStatus("已切到浅色");
+        }
+
+        private void BtnThemeDark_Click(object sender, RoutedEventArgs e)
+        {
+            TrmThemeService.Apply(true, _settings);
+            RefreshThemeButtons();
+            SetStatus("已切到深色");
+        }
+
+        // ── 解锁 / 退出 / 凭证 ──────────────────────────────────────────────
+
+        private void BtnAdminUnlock_Click(object sender, RoutedEventArgs e)
+        {
+            if (_adminKey == null) { LabAdminKeyError.Text = "凭据模块没加载"; return; }
+            var info = _adminKey.Current;
+            if (info == null || !info.Online)
+            {
+                LabAdminKeyError.Text = "服务器还没给凭证，断网时不能新解锁";
+                return;
+            }
+            if (!_adminKey.Validate(TxtAdminKeyInput.Text))
+            {
+                LabAdminKeyError.Text = "凭证不对，请输入服务设置页当前显示的那一串";
+                return;
+            }
+            _adminUnlocked = true;
+            _unlockKey = (info.Key ?? "").Trim();
+            PanAdminLocked.Visibility = Visibility.Collapsed;
+            PanAdminUnlocked.Visibility = Visibility.Visible;
+            PanAdminTools.IsEnabled = true;
+            LabAdminRemain.Text = "当前凭证还有 " + info.ExpiresText + " 有效";
+            TxtAdminKeyInput.Clear();
+            LabAdminKeyError.Text = "";
+            LabAdminAction.Text = "已解锁，可以管市场、接口和检查更新了";
+            SetStatus("维护模式已开启");
+        }
+
+        private async void BtnAdminRefreshKey_Click(object sender, RoutedEventArgs e)
+        {
+            if (_adminKey == null) return;
+            LabAdminKeyError.Text = "正在连服务器…";
+            var info = await _adminKey.RefreshAsync();
+            LabAdminKeyError.Text = info.Online ? "" : "刷新失败：" + info.Error;
+            SetStatus(info.Online ? "凭据已刷新" : "凭证没刷新成功", !info.Online);
+        }
+
+        private void BtnAdminSaveAccessKey_Click(object sender, RoutedEventArgs e)
+        {
+            var key = TxtAdminAccessKey.Text.Trim();
+            _gateway?.SetAccessKey(key);
+            _adminKey?.SetAccessKey(key);
+            RefreshEndpoints();
+            SetStatus("接入密钥已保存，正在用它重连");
+        }
+
+        private void BtnAdminExit_Click(object sender, RoutedEventArgs e) => LockAdmin("已退出维护模式");
+
+        // ── 市场状态与开关 ──────────────────────────────────────────────────
+
+        private void BtnAdminToggleMarket_Click(object sender, RoutedEventArgs e)
+        {
+            var next = !_admin.MarketEnabled;
+            _admin.SetMarketEnabled(next);
+            SyncMarketToggle();
+            if (!next)
+            {
+                _market.Clear();
+                LabNoMarket.Visibility = Visibility.Visible;
+            }
+            LabAdminAction.Text = next
+                ? "市场已开启，进市场页会重新拉线上清单"
+                : "市场已关闭，这台机器不再拉线上清单（服务端没被改）";
+            SetStatus(next ? "市场已开启" : "市场已关闭");
+        }
+
+        private async void BtnAdminCheck_Click(object sender, RoutedEventArgs e)
+        {
+            if (_adminBusy) return;
+            _adminBusy = true;
+            try
+            {
+                LabAdminAction.Text = "正在读服务器状态…";
+                var s = await _admin.CheckStatusAsync();
+                LabAdminMarketState.Text = "本机市场：" + (s.Enabled ? "开启" : "已关闭")
+                    + " · 上次来源 " + s.Origin + " · " + s.Items + " 个条目"
+                    + (string.IsNullOrEmpty(s.Message) ? "" : " · " + s.Message);
+                LabAdminServerState.Text = s.ServerAvailable
+                    ? "服务器：在线 · 市场" + (s.ServerMarketEnabled ? "开启" : "关闭")
+                      + " · " + s.ServerItems + " 个条目 · 更新于 " + s.Updated
+                    : "服务器：读不到（离线或响应被截断），本机功能不受影响";
+                LabAdminNotice.Text = s.Notice ?? "";
+                LabAdminAction.Text = s.ServerAvailable ? "本机 + 服务端状态都已更新" : "只拿到本机状态";
+                SyncMarketToggle();
+            }
+            catch (Exception ex) { LabAdminAction.Text = "检查失败：" + ex.Message; }
+            finally { _adminBusy = false; }
+        }
+
+        private async void BtnAdminRefreshMarket_Click(object sender, RoutedEventArgs e)
+        {
+            if (_adminBusy) return;
+            _adminBusy = true;
+            try
+            {
+                LabAdminAction.Text = "正在强制拉线上清单…";
+                var result = await _admin.ForceRefreshAsync();
+                ApplyMarketResult(result);
+                LabAdminAction.Text = result.Success
+                    ? "清单已刷新：" + result.Origin + " · " + (result.Catalog?.Items.Count ?? 0) + " 个条目"
+                    : "清单没拉下来：" + result.Message;
+            }
+            catch (Exception ex) { LabAdminAction.Text = "刷新失败：" + ex.Message; }
+            finally { _adminBusy = false; }
+        }
+
+        private void BtnAdminClearCache_Click(object sender, RoutedEventArgs e)
+        {
+            var ok = _admin.ClearCache();
+            LabAdminAction.Text = ok
+                ? "本地清单缓存已清掉，下次进市场会重新拉"
+                : "缓存清不掉（可能被别的程序占用）";
+            SetStatus(ok ? "市场缓存已清" : "缓存清不掉", !ok);
+        }
+
+        // ── 自动更新 ────────────────────────────────────────────────────────
+
+        /// <summary>两个通道都问，取更新的那个；只提示、只给链接，不静默下载。</summary>
+        private async Task CheckUpdateAsync(bool verbose)
+        {
+            try
+            {
+                if (verbose) LabAdminUpdate.Text = "正在问博客服务端和 GitHub…";
+                var info = await _updates.CheckAsync();
+                LabAdminUpdate.Text = "当前 " + info.CurrentVersion
+                    + " · 服务端 " + info.ServerVersion
+                    + " · GitHub " + info.GitHubVersion + "\n" + info.Message;
+                PanUpdateTip.Visibility = info.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+                if (info.HasUpdate)
+                    LabUpdateTip.Text = "发现新版本 " + info.LatestVersion + "（当前 "
+                        + info.CurrentVersion + "），点这里去 GitHub 下载安装包。";
+                if (verbose) SetStatus(info.HasUpdate ? "有新版本 " + info.LatestVersion : "已是最新版");
+            }
+            catch (Exception ex)
+            {
+                if (verbose)
+                {
+                    LabAdminUpdate.Text = "检查失败：" + ex.Message;
+                    SetStatus("更新检查失败", true);
+                }
+            }
+        }
+
+        private async void BtnAdminCheckUpdate_Click(object sender, RoutedEventArgs e)
+            => await CheckUpdateAsync(true);
+
+        private void UpdateTip_Click(object sender, MouseButtonEventArgs e) => OpenRelease();
+
+        private void BtnAdminGoGitHub_Click(object sender, RoutedEventArgs e) => OpenRelease();
+
+        private void OpenRelease()
+        {
+            try { _updates.OpenRelease(); }
+            catch (Exception ex) { SetStatus(ex.Message, true); }
+        }
+
+        // ── API 接口管理 ────────────────────────────────────────────────────
+
+        private static string EndpointId(object sender)
+            => (sender as FrameworkElement)?.Tag as string;
+
+        private void BtnAdminToggleEndpoint_Click(object sender, RoutedEventArgs e)
+        {
+            if (_gateway == null) return;
+            var id = EndpointId(sender);
+            var ep = _gateway.Endpoints.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (ep == null) return;
+            var was = ep.Enabled;
+            _gateway.SetEnabled(id, !was);
+            RefreshEndpoints();
+            LabAdminApiResult.Text = (was ? "已停用：" : "已启用：") + ep.Name;
+        }
+
+        private async void BtnAdminTestEndpoint_Click(object sender, RoutedEventArgs e)
+        {
+            if (_gateway == null) return;
+            var id = EndpointId(sender);
+            if (string.IsNullOrEmpty(id)) return;
+            LabAdminApiResult.Text = "正在测 " + id + " …";
+            var result = await _gateway.CallAsync(id, "pcv-probe");
+            var body = (result.Body ?? "").Replace("\r", " ").Replace("\n", " ");
+            if (body.Length > 160) body = body.Substring(0, 160) + "…";
+            LabAdminApiResult.Text = (result.Ok ? "通了" : "没通") + " · HTTP " + result.Status
+                + " · " + result.Message + (string.IsNullOrEmpty(body) ? "" : " · " + body);
+        }
+
+        /// <summary>接口表的可绑定包装；接口清单只有一个真相源（服务端的 interfaces.json）。</summary>
+        public sealed class EndpointCard
+        {
+            private readonly ApiEndpointInfo _ep;
+            public EndpointCard(ApiEndpointInfo ep) { _ep = ep; }
+
+            public string Id => _ep.Id;
+            public string Name => _ep.Name;
+            public string Note => _ep.Note;
+            public string MethodText => _ep.Method + " " + _ep.Path + (_ep.NeedsKey ? "  ·  要密钥" : "");
+            public string StateText => _ep.Enabled ? "已启用" : "已停用";
+            public string ToggleText => _ep.Enabled ? "停用" : "启用";
+            public Brush StateBrush
+            {
+                get
+                {
+                    return _ep.Enabled ? Trm.OkInk : Trm.Meta;
+                }
+            }
         }
     }
 }

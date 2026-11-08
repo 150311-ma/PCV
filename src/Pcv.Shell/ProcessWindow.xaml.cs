@@ -32,7 +32,7 @@ namespace Pcv.Shell
             });
             framework.Exited += (s, code) => Dispatcher.Invoke(() =>
             {
-                Dot.Fill = new SolidColorBrush(Color.FromRgb(0x8B, 0x94, 0x9E));
+                Dot.Fill = Trm.Help;
                 LabSub.Text = code == 0 ? "已退出" : $"已退出（{code}）";
                 BtnStop.IsEnabled = false;
                 Input.IsEnabled = false;

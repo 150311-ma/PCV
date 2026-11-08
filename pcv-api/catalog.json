@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "site": "https://cyan-blog-2fk.pages.dev",
+  "accessKey": "pcv-admin-2026",
+  "notice": "PCV 在线服务运行中。市场清单每 60 秒可刷新；凭证每 10 分钟轮换一次。",
+  "marketEnabled": true,
+  "endpoints": [
+    {
+      "id": "market.index",
+      "name": "市场清单",
+      "method": "GET",
+      "path": "/market/index.json",
+      "needsKey": false,
+      "enabled": true,
+      "note": "市场页读的就是它，装包前会逐个比 size / sha256。"
+    },
+    {
+      "id": "pcv.status",
+      "name": "服务状态",
+      "method": "GET",
+      "path": "/pcv-api/status.json",
+      "needsKey": false,
+      "enabled": true,
+      "note": "在线状态、服务端市场开关、条目数、公告。"
+    },
+    {
+      "id": "pcv.version",
+      "name": "最新版本",
+      "method": "GET",
+      "path": "/pcv-api/version.json",
+      "needsKey": false,
+      "enabled": true,
+      "note": "自动更新的服务端通道；另一个通道是 GitHub releases/latest。"
+    },
+    {
+      "id": "pcv.interfaces",
+      "name": "接口清单",
+      "method": "GET",
+      "path": "/pcv-api/interfaces.json",
+      "needsKey": false,
+      "enabled": true,
+      "note": "服务设置里那张接口表，就是从这里拉下来的。"
+    },
+    {
+      "id": "pcv.adminKey",
+      "name": "凭证",
+      "method": "GET",
+      "path": "/pcv-api/admin-key",
+      "needsKey": true,
+      "enabled": true,
+      "note": "每 10 分钟轮换一次；请求要带接入密钥 X-PCV-Api-Key。"
+    },
+    {
+      "id": "pcv.echo",
+      "name": "连通性测试",
+      "method": "POST",
+      "path": "/pcv-api/echo",
+      "needsKey": true,
+      "enabled": true,
+      "note": "把请求原样回显，用来验证接口和密钥是不是真的通。"
+    },
+    {
+      "id": "license.verify",
+      "name": "激活码验证（现成）",
+      "method": "POST",
+      "path": "/api/license/verify",
+      "needsKey": false,
+      "enabled": true,
+      "note": "博客原有的接口，直接用即可；新功能走上面的 API 接入，不用改代码。"
+    }
+  ]
+}

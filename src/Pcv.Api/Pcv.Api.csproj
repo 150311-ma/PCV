@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>Pcv.Api</RootNamespace>
+    <AssemblyName>Pcv.Api</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pcv.Modular.Abstractions\Pcv.Modular.Abstractions.csproj">
+      <Private>false</Private>
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="module.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 离线兜底：接口清单由 tools/build_pcv_api.py 生成，和线上同一份字节 -->
+    <EmbeddedResource Include="..\..\pcv-api\interfaces.json" LogicalName="Pcv.Api.interfaces.json" />
+  </ItemGroup>
+
+</Project>

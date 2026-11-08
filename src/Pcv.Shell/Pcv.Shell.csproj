@@ -26,6 +26,8 @@
     <ProjectReference Include="..\Pcv.Core\Pcv.Core.csproj" ReferenceOutputAssembly="false" Private="false" />
     <ProjectReference Include="..\Pcv.Theme\Pcv.Theme.csproj" ReferenceOutputAssembly="false" Private="false" />
     <ProjectReference Include="..\Pcv.Launch.Microsoft\Pcv.Launch.Microsoft.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\Pcv.Api\Pcv.Api.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\Pcv.AdminKey\Pcv.AdminKey.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,10 +55,16 @@
       <ThemeModuleFiles Include="..\Pcv.Theme\module.json" />
       <LoginModuleFiles Include="..\Pcv.Launch.Microsoft\bin\$(Configuration)\Pcv.Launch.Microsoft.dll" />
       <LoginModuleFiles Include="..\Pcv.Launch.Microsoft\module.json" />
+      <ApiModuleFiles Include="..\Pcv.Api\bin\$(Configuration)\Pcv.Api.dll" />
+      <ApiModuleFiles Include="..\Pcv.Api\module.json" />
+      <AdminKeyModuleFiles Include="..\Pcv.AdminKey\bin\$(Configuration)\Pcv.AdminKey.dll" />
+      <AdminKeyModuleFiles Include="..\Pcv.AdminKey\module.json" />
     </ItemGroup>
     <Copy SourceFiles="@(CoreModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.core" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(ThemeModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.theme" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(LoginModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.launch.microsoft" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ApiModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.api" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(AdminKeyModuleFiles)" DestinationFolder="$(OutDir)modules\pcv.adminkey" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

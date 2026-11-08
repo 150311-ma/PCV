@@ -61,6 +61,22 @@ python tools/check_repo.py --inject-fault   :: 确认体检器自己没瞎
 初次启动会自动进新手引导，点「开始使用」记下状态，以后不再弹；
 侧栏的「新手引导」随时能重看。
 
+### 视觉：TRM UI 设计令牌
+
+界面按 [TRM UI](https://github.com/Turing-Mirror/TRM-UI)（MIT）的设计系统重写。
+它是 Web 组件库，所以这里移植的是**令牌与外壳布局**，不是引用它的 React 组件：
+
+- 白色标题栏与侧栏，内容区向内收 8px 并带 14px 圆角，靠底色分区不画分隔线；
+- 颜色、七档字号、两档圆角、字体栈统一放在
+  `src/Pcv.Shell/Styles/TrmTheme.xaml`（浅色）与 `TrmTheme.Dark.xaml`（深色），
+  两份字典 key 一一对应；标题栏那个「深 / 浅」小按钮随时可切，不用重开窗口；
+- **界面里不许写死颜色**：XAML 用 `{DynamicResource TrmXxx}`，C# 用 `Trm.Xxx`，
+  `tools/check_trm_theme.py` 在 CI 上闸这一条。写死的颜色在另一套主题下必然是错的，
+  而且只有换主题那一刻才看得出来。
+
+模块自带的框架界面还有一部分沿用各自写死的字色，框架窗口用浅色画布承载，
+两套主题下都可读；这些界面本身暂不随主题变。
+
 ## 市场：博客当服务端
 
 PCV 从 `https://cyan-blog-2fk.pages.dev/market/index.json` 拉清单，包是同目录下的
@@ -228,6 +244,8 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 | 构建 | `python tools/build_market.py`，再 `dotnet build Pcv.sln -c Release` |
 | 仓库体检（版本 / 文档 / 清单 / 市场） | `python tools/check_repo.py` |
 | 体检器自检（注入已知故障） | `python tools/check_repo.py --inject-fault` |
+| TRM 主题体检（令牌对齐 / 界面无裸色） | `python tools/check_trm_theme.py` |
+| 主题体检器自检 | `python tools/check_trm_theme.py --inject-fault` |
 | 生成市场清单并自校验 | `python tools/build_market.py` |
 | 市场清单校验器自检 | `python tools/build_market.py --inject-fault` |
 | 同步市场到博客三处 | `python tools/build_market.py --blog <博客根目录>` |
@@ -235,6 +253,7 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 | 打安装程序 | `python tools/build_installer.py` |
 | 自检（模块图是否健康） | `Pcv.Modular.Cli.exe --modules <目录>` |
 | 离屏渲染某页（截图用） | `PCV.exe --render out.png --page market` |
+| 深色主题 / 验证已加载窗口换主题 | `PCV.exe --dark …` / `PCV.exe --switch-dark --render …` |
 | 只留托盘图标、后台启动 | `PCV.exe --tray` |
 | 打开自检窗口 | `PCV.exe --selfcheck` |
 | 直接打开某个框架 | `PCV.exe --open pcv.theme` |
@@ -248,6 +267,9 @@ DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 P
 这个项目是从 [PCL](https://github.com/Meloong-Git/PCL) 学来的：架构思路、契约设计、主题配色算法。
 2.0.0 起代码已全部重写，不含上游源码；[`LICENCE-PCL`](LICENCE-PCL) 作为来源记录保留。
 署名和感谢写在 [NOTICE.md](NOTICE.md)，程序「版权」页里也有一份。
+
+界面设计令牌与外壳布局来自 [Turing-Mirror/TRM-UI](https://github.com/Turing-Mirror/TRM-UI)
+（MIT），按其 `tokens.css` 翻成 WPF 资源；只用了令牌与设计约定，未复制其组件源码。
 
 ## 已知限制
 

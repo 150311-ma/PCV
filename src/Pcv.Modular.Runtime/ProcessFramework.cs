@@ -61,6 +61,7 @@ namespace Pcv.Modular.Runtime
         public void Start()
         {
             if (IsRunning) return;
+            _stopping = false;   // 新一轮运行：上次的「主动停止」标记不该带过来
 
             var directory = _manifest.DirectoryPath;
             var script = Path.Combine(directory, _manifest.Script ?? "");
@@ -83,7 +84,9 @@ namespace Pcv.Modular.Runtime
             {
                 var code = -1;
                 try { code = _process.ExitCode; } catch { }
-                _log.Info($"{Id} 进程结束（退出码 {code}）");
+                _log.Info(_stopping
+                    ? $"{Id} 已按请求停止（退出码 {code}）"
+                    : $"{Id} 进程结束（退出码 {code}）");
                 FrameworkRegistry.Unregister(Id);
                 _job?.Dispose();
                 _job = null;
@@ -141,7 +144,8 @@ namespace Pcv.Modular.Runtime
             }
             finally
             {
-                _stopping = false;
+                // _stopping 留到 Exited 事件里读：那里才分得清「主动停」和「自己崩了」。
+                // 下一次 Start() 会把它清零。
                 FrameworkRegistry.Unregister(Id);
                 _job?.Dispose();
                 _job = null;

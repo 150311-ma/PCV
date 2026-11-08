@@ -154,4 +154,69 @@ namespace Pcv.Modular.Contracts
         Task<MsAccount> CompleteLoginAsync(DeviceCodeInfo deviceCode, IProgress<string> progress, CancellationToken cancellationToken);
         Task<MsAccount> RefreshAsync(string refreshToken, CancellationToken cancellationToken);
     }
+
+    // ── 在线服务：API 网关 ────────────────────────────────────────────────
+    // 「已有接口直接用，新功能通过 API 接入」的落点：壳和别的模块都只认
+    // IApiGateway，不各自写一份 HTTP；接口清单来自服务端，加功能不用改壳。
+    // 契约程序集不引用 WPF / Newtonsoft，所以这里全是纯数据 DTO。
+
+    public sealed class ApiEndpointInfo
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Method { get; set; }
+        public string Path { get; set; }
+        public bool NeedsKey { get; set; }
+        public bool Enabled { get; set; }
+        public string Note { get; set; }
+        public override string ToString() => Name + "  " + Method + " " + Path;
+    }
+
+    public sealed class ApiCallResult
+    {
+        public bool Ok { get; set; }
+        public int Status { get; set; }
+        public string Message { get; set; }
+        public string Body { get; set; }
+    }
+
+    public interface IApiGateway
+    {
+        string Site { get; }
+        string AccessKey { get; }
+        IReadOnlyList<ApiEndpointInfo> Endpoints { get; }
+        /// <summary>接入密钥在服务设置里改；改完立即落盘并通知界面。</summary>
+        void SetAccessKey(string key);
+        void SetEnabled(string id, bool enabled);
+        /// <summary>从服务端拉最新接口清单；失败保留本地那份并回 false。</summary>
+        Task<bool> RefreshAsync();
+        /// <summary>按 id 调一个已登记的接口，path 只能来自接口清单。</summary>
+        Task<ApiCallResult> CallAsync(string id, string body = null);
+        event Action<string> Changed;
+    }
+
+    // ── 在线服务：轮换凭证 ──────────────────────────────────────────────
+    // 服务端每 10 分钟换一次；模块负责定时刷新，壳只负责比对与计时。
+
+    public sealed class AdminKeyInfo
+    {
+        public string Key { get; set; }
+        public int Interval { get; set; }
+        public int ExpiresIn { get; set; }
+        public string ServerTime { get; set; }
+        public bool Online { get; set; }
+        public string Error { get; set; }
+        public string ExpiresText => ExpiresIn > 0
+            ? (ExpiresIn / 60) + " 分 " + (ExpiresIn % 60) + " 秒"
+            : "—";
+    }
+
+    public interface IAdminKeyProvider
+    {
+        AdminKeyInfo Current { get; set; }
+        void SetAccessKey(string key);
+        Task<AdminKeyInfo> RefreshAsync();
+        bool Validate(string input);
+        event Action<AdminKeyInfo> KeyChanged;
+    }
 }

@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="粘贴 AI 输出" Height="580" Width="820" MinHeight="400" MinWidth="560"
-        WindowStyle="None" ResizeMode="CanResize" Background="#F6F8FC"
+        WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource TrmBg}"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        FontFamily="PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑" FontSize="13">
+        FontFamily="{DynamicResource TrmFont}" FontSize="13">
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" />
@@ -22,18 +22,18 @@
         <!-- 标题栏 -->
         <Grid Grid.Row="0" Margin="18,0,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <TextBlock Text="粘贴 AI 的输出" FontSize="13" FontWeight="SemiBold"
-                       VerticalAlignment="Center" Foreground="#131A24" />
-            <Button HorizontalAlignment="Right" Width="38" Height="28" Background="Transparent" Cursor="Hand"
+                       VerticalAlignment="Center" Foreground="{DynamicResource TrmInk}" />
+            <Button HorizontalAlignment="Right" Width="38" Height="28" Background="{DynamicResource TrmTransparent}" Cursor="Hand"
                     Click="BtnClose_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Shell" Background="{TemplateBinding Background}" CornerRadius="8">
-                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="#4A5563" StrokeThickness="1.5"
+                            <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="{DynamicResource TrmInkMuted}" StrokeThickness="1.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Shell" Property="Background" Value="#22E5484D" />
+                                <Setter TargetName="Shell" Property="Background" Value="{DynamicResource TrmDangerSoft}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -43,11 +43,11 @@
 
         <!-- 说明 -->
         <StackPanel Grid.Row="1" Margin="20,0,20,10">
-            <TextBlock FontSize="12" Foreground="#7A8699" TextWrapping="Wrap" LineHeight="19"
+            <TextBlock FontSize="12" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" LineHeight="19"
                        Text="AI 给的构建脚本直接贴进来，点「构建并安装」：它在隔离目录里跑完，产物自动装上，不用你再找文件、也不用点第二次。" />
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="从剪贴板粘贴" Height="28" Padding="12,0" FontSize="11.5" Cursor="Hand"
-                        Background="White" BorderBrush="#E1E9F5" BorderThickness="1" Click="BtnPaste_Click">
+                        Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmLine}" BorderThickness="1" Click="BtnPaste_Click">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
@@ -58,27 +58,27 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <TextBlock Text="带 ``` 代码块也没事，会自动去掉围栏" FontSize="11" Foreground="#9AA4B2"
+                <TextBlock Text="带 ``` 代码块也没事，会自动去掉围栏" FontSize="11" Foreground="{DynamicResource TrmMeta}"
                            VerticalAlignment="Center" Margin="10,0,0,0" />
             </StackPanel>
         </StackPanel>
 
         <!-- 代码区 -->
-        <Border Grid.Row="2" Background="#0E1520" CornerRadius="12" Margin="18,0,18,0">
-            <TextBox x:Name="Code" Background="Transparent" BorderThickness="0" Foreground="#C9D1D9"
-                     CaretBrush="#E6EDF3" Padding="14,12" AcceptsReturn="True" AcceptsTab="True"
-                     FontFamily="Consolas, Microsoft YaHei UI" FontSize="12.5"
+        <Border Grid.Row="2" Background="{DynamicResource TrmBg}" CornerRadius="12" Margin="18,0,18,0">
+            <TextBox x:Name="Code" Background="{DynamicResource TrmTransparent}" BorderThickness="0" Foreground="{DynamicResource TrmInkMuted}"
+                     CaretBrush="{DynamicResource TrmInk}" Padding="14,12" AcceptsReturn="True" AcceptsTab="True"
+                     FontFamily="{DynamicResource TrmFont}" FontSize="12.5"
                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                      TextWrapping="NoWrap" />
         </Border>
 
         <!-- 操作栏 -->
         <Grid Grid.Row="3" Margin="18,12,18,14">
-            <TextBlock x:Name="LabHint" VerticalAlignment="Center" FontSize="11.5" Foreground="#8A94A3"
+            <TextBlock x:Name="LabHint" VerticalAlignment="Center" FontSize="11.5" Foreground="{DynamicResource TrmHelp}"
                        TextWrapping="Wrap" MaxWidth="360" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="直接运行（不安装）" Height="36" Padding="16,0" Margin="0,0,10,0"
-                        Cursor="Hand" Background="White" BorderBrush="#E1E9F5" BorderThickness="1"
+                        Cursor="Hand" Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmLine}" BorderThickness="1"
                         FontSize="12" Click="BtnRun_Click">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
@@ -92,7 +92,7 @@
                 </Button>
 
                 <Button x:Name="BtnBuild" Content="构建并安装" Width="132" Height="36"
-                        Cursor="Hand" Background="#1370F3" Foreground="White" BorderThickness="0"
+                        Cursor="Hand" Background="{DynamicResource TrmAccent}" Foreground="{DynamicResource TrmWhite}" BorderThickness="0"
                         FontSize="12" Click="BtnBuild_Click">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">

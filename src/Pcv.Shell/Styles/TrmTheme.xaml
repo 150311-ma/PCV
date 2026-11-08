@@ -1,0 +1,114 @@
+<!--
+  TRM UI 设计令牌 · 浅色主题
+  ·
+  来源：Turing-Mirror/TRM-UI  src/trm/styles/tokens.css（MIT）
+  这是 Web 设计系统在 WPF 上的令牌翻译，不是把 React 组件搬进来。
+
+  三条硬规矩沿用上游：
+  1. 颜色只从这里取。界面 XAML / C# 里不许再出现裸 #RRGGBB —— 写死的颜色
+     在另一套主题下必然是错的，而且只有换主题时才看得出来。
+     校验器：tools/check_trm_theme.py
+  2. 界面文字只从语言包取。（本仓库目前只有中文，先守住「一处一源」）
+  3. 这一层不引用产品代码。字典只放值，不放逻辑。
+
+  引用统一用 DynamicResource，这样 TrmThemeService.Apply(dark) 换字典时
+  已经显示的窗口也会跟着变；用 StaticResource 只在加载时解析一次，换不动。
+
+  深色那份是 TrmTheme.Dark.xaml，key 必须一一对应，脚本会比对。
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:String x:Key="TrmThemeMarker">light</sys:String>
+
+    <!-- ── 外壳与层 ───────────────────────────────────────────────────── -->
+    <!-- shell 白、workspace 米白并向内收一圈：靠底色分区，不画分隔线 -->
+    <SolidColorBrush x:Key="TrmBg" Color="#F4F6F8" />
+    <SolidColorBrush x:Key="TrmSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TrmShell" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TrmWorkspace" Color="#F4F6F8" />
+    <SolidColorBrush x:Key="TrmRail" Color="#EEF1F4" />
+    <SolidColorBrush x:Key="TrmGroup" Color="#F9FAFB" />
+    <SolidColorBrush x:Key="TrmStage" Color="#E8F4FD" />
+    <SolidColorBrush x:Key="TrmPageBg" Color="#DFE4EA" />
+    <!-- 模块自带界面的承载画布。各模块自己的 Surface 里还有写死的深色字，
+         还没全部纳入令牌；这块底在两套主题下都保持浅色，保证它们读得清。 -->
+    <SolidColorBrush x:Key="TrmModulePane" Color="#FFFFFF" />
+
+    <!-- ── 文字 ───────────────────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="TrmInk" Color="#1E242B" />
+    <SolidColorBrush x:Key="TrmInkMuted" Color="#5D6874" />
+    <SolidColorBrush x:Key="TrmHelp" Color="#8A949E" />
+    <SolidColorBrush x:Key="TrmMeta" Color="#A3ACB6" />
+
+    <!-- ── 描边 ───────────────────────────────────────────────────────── -->
+    <!-- 上游用 rgba(ink, .10/.14/.30)；WPF 里折算成白底上的实色，避免
+         半透明描边在米白工作区上和白色卡片上深浅不一致。 -->
+    <SolidColorBrush x:Key="TrmHairline" Color="#E6E9ED" />
+    <SolidColorBrush x:Key="TrmLine" Color="#DCE0E5" />
+    <SolidColorBrush x:Key="TrmFocusLine" Color="#B9BEC5" />
+
+    <!-- ── 强调色：每屏最多一处实心 ─────────────────────────────────── -->
+    <SolidColorBrush x:Key="TrmAccent" Color="#1289F0" />
+    <SolidColorBrush x:Key="TrmAccentHover" Color="#0F76D2" />
+    <SolidColorBrush x:Key="TrmAccentInk" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TrmAccentSoft" Color="#E8F4FE" />
+    <SolidColorBrush x:Key="TrmAccentSoftHover" Color="#DCEBFC" />
+    <SolidColorBrush x:Key="TrmAccentChipInk" Color="#0868B8" />
+
+    <!-- ── 中性 chip / 图标底 ────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="TrmChip" Color="#E9ECEF" />
+    <SolidColorBrush x:Key="TrmChipInk" Color="#5D6874" />
+    <SolidColorBrush x:Key="TrmIconTile" Color="#EEF3F9" />
+    <SolidColorBrush x:Key="TrmGloss" Color="#16FFFFFF" />
+    <SolidColorBrush x:Key="TrmHoverVeil" Color="#0E1E242B" />
+    <SolidColorBrush x:Key="TrmChromeVeil" Color="#141E242B" />
+    <SolidColorBrush x:Key="TrmWhite" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TrmTransparent" Color="Transparent" />
+    <SolidColorBrush x:Key="TrmScrim" Color="#47141A22" />
+
+    <!-- ── 状态色 ─────────────────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="TrmOk" Color="#2F9E6A" />
+    <SolidColorBrush x:Key="TrmOkSoft" Color="#E7F5EE" />
+    <SolidColorBrush x:Key="TrmOkInk" Color="#227342" />
+    <SolidColorBrush x:Key="TrmWarn" Color="#FF9500" />
+    <SolidColorBrush x:Key="TrmWarnSoft" Color="#FFF3E2" />
+    <SolidColorBrush x:Key="TrmWarnInk" Color="#C96A00" />
+    <SolidColorBrush x:Key="TrmDanger" Color="#D0533F" />
+    <SolidColorBrush x:Key="TrmDangerSoft" Color="#FBEBE8" />
+    <SolidColorBrush x:Key="TrmDangerInk" Color="#B13D2C" />
+    <SolidColorBrush x:Key="TrmNotify" Color="#FF9500" />
+
+    <!-- 预览色：模块没声明 accent 时，图块与图标轮流用这六档 -->
+    <SolidColorBrush x:Key="TrmArt1" Color="#1370F3" />
+    <SolidColorBrush x:Key="TrmArt2" Color="#7A5AF8" />
+    <SolidColorBrush x:Key="TrmArt3" Color="#0E9F6E" />
+    <SolidColorBrush x:Key="TrmArt4" Color="#F27A54" />
+    <SolidColorBrush x:Key="TrmArt5" Color="#1C9CC4" />
+    <SolidColorBrush x:Key="TrmArt6" Color="#D64B8B" />
+
+    <!-- ── 排版：只有七档，别随手插中间值 ───────────────────────────── -->
+    <FontFamily x:Key="TrmFont">PingFang SC, MiSans, Microsoft YaHei UI, 微软雅黑</FontFamily>
+    <sys:Double x:Key="TrmTextTitle">25</sys:Double>
+    <sys:Double x:Key="TrmTextBlock">15.5</sys:Double>
+    <sys:Double x:Key="TrmTextBody">15</sys:Double>
+    <sys:Double x:Key="TrmTextList">14</sys:Double>
+    <sys:Double x:Key="TrmTextControl">13</sys:Double>
+    <sys:Double x:Key="TrmTextHelp">12.5</sys:Double>
+    <sys:Double x:Key="TrmTextMeta">11.5</sys:Double>
+
+    <!-- ── 形状：只有两档圆角 ────────────────────────────────────────── -->
+    <CornerRadius x:Key="TrmRadius">14</CornerRadius>
+    <CornerRadius x:Key="TrmRadiusSmall">8</CornerRadius>
+    <Thickness x:Key="TrmShellGap">8</Thickness>
+    <Thickness x:Key="TrmCardPad">18,16</Thickness>
+    <Thickness x:Key="TrmPagePad">32,22,32,28</Thickness>
+    <sys:Double x:Key="TrmRailWidth">208</sys:Double>
+    <sys:Double x:Key="TrmTitleBarHeight">52</sys:Double>
+
+    <!-- 卡片浮起：0 2px 10px rgba(0,0,0,.1) -->
+    <DropShadowEffect x:Key="TrmGlass" x:Shared="False" Color="#1E242B"
+                      Opacity="0.10" BlurRadius="10" ShadowDepth="2" Direction="270" />
+
+</ResourceDictionary>

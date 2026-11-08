@@ -286,19 +286,19 @@ namespace Pcv.Shell
             switch (state)
             {
                 case "通过":
-                    StateBrush = Solid("#16A34A");
-                    StatePill = Solid("#E8F7EE");
-                    StateInk = Solid("#15803D");
+                    StateBrush = Trm.Ok;
+                    StatePill = Trm.OkSoft;
+                    StateInk = Trm.OkInk;
                     break;
                 case "注意":
-                    StateBrush = Solid("#D97706");
-                    StatePill = Solid("#FFF4E5");
-                    StateInk = Solid("#9A5B00");
+                    StateBrush = Trm.Warn;
+                    StatePill = Trm.WarnSoft;
+                    StateInk = Trm.WarnInk;
                     break;
                 default:
-                    StateBrush = Solid("#E5484D");
-                    StatePill = Solid("#FDECEC");
-                    StateInk = Solid("#C0363A");
+                    StateBrush = Trm.Danger;
+                    StatePill = Trm.DangerSoft;
+                    StateInk = Trm.DangerInk;
                     break;
             }
         }
@@ -310,7 +310,5 @@ namespace Pcv.Shell
         public Brush StatePill { get; private set; }
         public Brush StateInk { get; private set; }
 
-        private static Brush Solid(string hex)
-            => new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
     }
 }

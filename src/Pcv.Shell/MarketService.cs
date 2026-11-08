@@ -92,7 +92,32 @@ namespace Pcv.Shell
         /// <summary>同步版，只给离屏渲染截图用（异步还没回来就截图会拍到空列表）。</summary>
         public MarketResult LoadForRender() => Load(true);
 
+        /// <summary>市场关掉后，这台机器一次请求都不发。</summary>
+        public bool Enabled { get; set; } = true;
+
+        /// <summary>最近一次读清单的结果，给服务设置看状态用。</summary>
+        public MarketResult LastResult { get; private set; }
+
+        public bool ClearCache()
+        {
+            try
+            {
+                if (System.IO.File.Exists(_cacheFile)) System.IO.File.Delete(_cacheFile);
+                LastResult = null;
+                return true;
+            }
+            catch { return false; }
+        }
+
         private MarketResult Load(bool forceOnline)
+        {
+            LastResult = !Enabled
+                ? new MarketResult { Success = false, Origin = "已关闭", Message = "市场已关闭" }
+                : LoadCore(forceOnline);
+            return LastResult;
+        }
+
+        private MarketResult LoadCore(bool forceOnline)
         {
             if (forceOnline)
             {
@@ -271,7 +296,7 @@ namespace Pcv.Shell
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Timeout = TimeoutMs;
             request.ReadWriteTimeout = TimeoutMs;
-            request.UserAgent = "PCV-Market/2.10";
+            request.UserAgent = "PCV-Market/3";
             request.Headers[HttpRequestHeader.CacheControl] = "no-cache";
             return request;
         }

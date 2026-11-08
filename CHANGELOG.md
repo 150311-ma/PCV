@@ -6,7 +6,75 @@
 
 ## 进行中（未发版）
 
-_暂无。_
+### 界面按 TRM UI 重写
+
+**口径**：[Turing-Mirror/TRM-UI](https://github.com/Turing-Mirror/TRM-UI)（MIT）是
+React + Tauri 的 Web 设计系统，PCV 是 WPF，所以搬的是**设计令牌与外壳布局**，
+不是把 React 组件塞进来。
+
+- `src/Pcv.Shell/Styles/TrmTheme.xaml` / `TrmTheme.Dark.xaml`：把上游 `tokens.css`
+  的颜色、七档字号、两档圆角、字体栈、8px 外壳间隙翻成 WPF 资源，两份字典
+  63 个 key 一一对应。界面统一用 `DynamicResource`，换主题不用重开窗口。
+- 外壳改成 TRM Nexus：白色标题栏与侧栏，内容区向内收 8px、带 14px 圆角的米白
+  工作区，两块靠底色分区、不画分隔线。七个窗口（主 / 构建 / 框架 / 进程 / 脚本 /
+  自检 / 服务）全部换成令牌配色，原来两个黑底终端窗口也一并收进来。
+- 标题栏的小按钮可切浅色 / 深色；`--dark` 供截图，`--switch-dark` 供自动化验证
+  「窗口已经加载完再换主题」——正是靠它抓到导航选中态仍留在旧主题色的 bug
+  （一次性赋 Brush 不会跟着变，改成 `SetResourceReference` 才对）。
+- `tools/check_trm_theme.py` 把「颜色只从变量取」变成闸门：闸裸色值、闸
+  `StaticResource`、闸不存在的令牌、闸两份字典 key 不对齐；`--inject-fault`
+  注入 5 类故障确认它自己会报红。`repo-check.yml` 加了这两步。
+
+**已知边界**：各模块自带的 `IFrameworkSurface` 里还有写死的深色字，尚未全部
+纳入令牌。框架窗口用 `TrmModulePane` 浅色画布承载，两套主题下都可读，但模块
+界面本身不随主题变。要它们全跟着变，得改各模块自己的 Surface。
+
+### 服务设置、在线接口与自动更新（补完上一轮）
+
+上一轮被中断，XAML 画好了但 `MainWindow.xaml.cs` 的 13 个事件处理没写，
+编译报 13 个 `CS1061`。这轮补齐并跑通。
+
+- 服务设置：可开关本机市场、查服务状态、强制刷新清单、清缓存，以及逐个
+  停用 / 测试 API 接口。凭据由服务器按时间片签发，轮换或断网会自动退出维护模式；
+  市场关闭是本地设置，这台机器一次线上请求都不发。
+- `pcv.api` 模块：接口清单只有一份真相源 `pcv-api/catalog.json`，由
+  `tools/build_pcv_api.py` 生成线上 `interfaces.json`（并内嵌进程序集断网兜底）。
+  已有的接口（如博客原有的激活码验证）登记进清单即可用，新在线功能通过 API 接入。
+- 轮换凭据模块 `pcv.adminkey`：站点与接入密钥都向 `IApiGateway` 要，不另存一份常量；
+  每 30 秒走一次计时器，到点才真发请求，不会十分钟里一直打扰服务器。
+- 自动更新：同时问博客 `version.json` 与 GitHub `releases/latest`，取更新的那个，
+  只在桌面顶上挂一条提示并给下载链接，不静默下载；两个通道各自独立。
+- 博客服务端新增 `/pcv-api/status.json`、`version.json`、`interfaces.json`
+  与 `/pcv-api/admin-key`、`/pcv-api/echo`；`_routes.json` / `_worker.js` 放行静态直出。
+
+### 维护入口不外露 + 网页服务设置
+
+- 侧栏不再出现维护入口，改成标题栏版本号连点 5 次才进得去；页面标题改「服务设置」，
+  界面文案统一用「凭证 / 维护模式」。普通用户在界面、公开文档、宣传片里都看不到它。
+- 浅色 / 深色切换移到标题栏的小按钮，不再藏在服务设置里 —— 这是所有人都能用的功能。
+- 凭证**每 10 分钟轮换一次**；网页管理台与桌面端共用同一个 `pcvCredential()` 实现，
+  线上实测两边在同一时间片给出的 6 位数字完全一致。
+- 博客服务端新增网页管理台 `/_admin/pcv` 与 4 条 `/api/pcv-admin/*` API
+  （状态 / 凭证 / 市场开关 / 接口启停），只认博客管理员会话；开关写进 KV 的
+  一个键，桌面端读的 `status.json` / `interfaces.json` 当场叠加，不用重新发版。
+- 修「用户管理页一直转圈」：接口本身返回 200，但本机到 CF 边缘约一半请求
+  **完全无响应**，而浏览器 `fetch` 没有默认超时。后台 `admin.js` 的 `api()`
+  加 8 秒超时 + GET 自动重试 2 次；POST 默认不重试（超时不代表没执行，
+  盲重发会重复提交）。`verify-pcv-admin.cjs` 带反向注入闸住这两件事。
+
+### 新 UI 宣传片
+
+- 按 TRM 新壳重截 5 张镜头（桌面 / 框架 / 安装 / 市场 / 深色），7 帧 32 秒静音版
+  与约 57 秒有声版；封面加了一张新 UI 真截图。
+- 三支脚本共用 `tools/promo_style.py`：色值从 `TrmTheme.xaml` 解析、版本号从
+  `Installer.cs` 读、帧名单由 `make_promo.frame_names()` 统一生成，不再各抄一份。
+- `make_bili.py` 改出 `PCV-B站静音版.mp4`，不再和 `make_narrated.py` 抢同一个文件名。
+- 字幕、旁白、投稿信息全部重写，不出现维护相关字样。
+
+### 流程
+
+- 纯流程与界面改动，按约定**不升版本号、不重打安装包**，记在这一段。
+- `market/index.json` 的 `updated` 因跨日重算过一次；条目 / size / sha256 都没变。
 
 ---
 

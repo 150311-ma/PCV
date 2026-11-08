@@ -3,49 +3,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
-        <!-- 主题模块起来之前/之后的兜底令牌，和 PCL 的令牌名保持一致 -->
-        <SolidColorBrush x:Key="ColorBrush1" Color="#343D4A" />
-        <SolidColorBrush x:Key="ColorBrush2" Color="#0B5BCB" />
-        <SolidColorBrush x:Key="ColorBrush3" Color="#1370F3" />
-        <SolidColorBrush x:Key="ColorBrush4" Color="#4890F5" />
-        <SolidColorBrush x:Key="ColorBrush5" Color="#96C0F9" />
-        <SolidColorBrush x:Key="ColorBrush6" Color="#D5E6FD" />
-        <SolidColorBrush x:Key="ColorBrush7" Color="#E0EAFD" />
-        <SolidColorBrush x:Key="ColorBrush8" Color="#EAF2FE" />
-        <SolidColorBrush x:Key="ColorBrushGray2" Color="#737373" />
-        <SolidColorBrush x:Key="ColorBrushGray3" Color="#8C8C8C" />
-        <SolidColorBrush x:Key="ColorBrushGray5" Color="#CCCCCC" />
-        <SolidColorBrush x:Key="ColorBrushGray6" Color="#EBEBEB" />
-        <SolidColorBrush x:Key="ColorBrushGray7" Color="#F0F0F0" />
-        <SolidColorBrush x:Key="ColorBrushGray8" Color="#F5F5F5" />
+        <ResourceDictionary>
+            <!-- TRM UI 设计令牌。MergedDictionaries[0] 就是当前主题，
+                 TrmThemeService 换主题时替换这一项；界面全用 DynamicResource 才会跟着变。 -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/TrmTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
-        <!-- 细滚动条：全局只放一份，主窗口和自检窗口共用。
-             放在 Window.Resources 里的话，第二个窗口就得再抄一遍。 -->
-        <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid Background="Transparent">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#C9D5E6" CornerRadius="4" Width="6"
-                                                        HorizontalAlignment="Center" Margin="1,3" />
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            <!--
+              以下 ColorBrush1~8 / ColorBrushGray* 不是界面配色入口，而是
+              Pcv.Theme 模块的「运行时插槽」：它在 OnStart 里按 12 套调色板
+              动态写这些 key（见 Pcv.Theme/Palette.cs），FrameworkWindow 等旧窗口
+              还用 DynamicResource 读它们。删掉会让主题模块加载前取不到值。
+              新界面一律用 Trm* 令牌，不要引用这一组。
+            -->
+            <SolidColorBrush x:Key="ColorBrush1" Color="#343D4A" />
+            <SolidColorBrush x:Key="ColorBrush2" Color="#0B5BCB" />
+            <SolidColorBrush x:Key="ColorBrush3" Color="#1370F3" />
+            <SolidColorBrush x:Key="ColorBrush4" Color="#4890F5" />
+            <SolidColorBrush x:Key="ColorBrush5" Color="#96C0F9" />
+            <SolidColorBrush x:Key="ColorBrush6" Color="#D5E6FD" />
+            <SolidColorBrush x:Key="ColorBrush7" Color="#E0EAFD" />
+            <SolidColorBrush x:Key="ColorBrush8" Color="#EAF2FE" />
+            <SolidColorBrush x:Key="ColorBrushGray2" Color="#737373" />
+            <SolidColorBrush x:Key="ColorBrushGray3" Color="#8C8C8C" />
+            <SolidColorBrush x:Key="ColorBrushGray5" Color="#CCCCCC" />
+            <SolidColorBrush x:Key="ColorBrushGray6" Color="#EBEBEB" />
+            <SolidColorBrush x:Key="ColorBrushGray7" Color="#F0F0F0" />
+            <SolidColorBrush x:Key="ColorBrushGray8" Color="#F5F5F5" />
 
-        <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
+            <!-- 细滚动条：全局只放一份，主窗口和自检窗口共用。
+                 放在 Window.Resources 里的话，第二个窗口就得再抄一遍。 -->
+            <Style x:Key="ThinScrollBar" TargetType="ScrollBar">
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Background" Value="{DynamicResource TrmTransparent}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="{DynamicResource TrmTransparent}">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border Background="{DynamicResource TrmLine}"
+                                                            CornerRadius="4" Width="6"
+                                                            HorizontalAlignment="Center" Margin="1,3" />
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}" />
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
