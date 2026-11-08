@@ -382,7 +382,7 @@
                         <!-- 版本号只是版本号。维护入口不挂在导航上，也不给任何提示。 -->
                         <Border Background="{DynamicResource TrmHairline}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,2" Margin="8,0,0,0"
                                 VerticalAlignment="Center" MouseLeftButtonDown="VersionBadge_MouseLeftButtonDown">
-                            <TextBlock x:Name="LabVersion" Text="3.0.0" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
+                            <TextBlock x:Name="LabVersion" Text="3.1.0" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
                         </Border>
                     </StackPanel>
 

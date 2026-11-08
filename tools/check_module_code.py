@@ -45,13 +45,18 @@ MARKET_CS = ROOT / "src" / "Pcv.Shell" / "MarketService.cs"
 
 # 金标准向量：这些号是算法定死的结果，改算法就必须改这里（并同步两端）。
 # 它们不是「跑一遍看输出」生成的 —— 是契约。
+#
+# 版本号统一写 9.9.9：**故意不用产品版本号**。
+# 否则 `tools/bump_version.py` 刷版时会把这些测试值一起替换掉，
+# 期望值没跟着重算，体检立刻报「向量对不上」——3.0.0 → 3.1.0 时就这么红过一次。
+# 向量要的是「固定的输入」，不是「当前的版本」。
 GOLDEN = [
-    ("pcv.stat", "3.0.0", "a" * 64, "PCV-ARJM-8YF8-W9K9"),
-    ("pcv.official.guide", "3.0.0", "b" * 64, "PCV-NTV8-MRYZ-B90V"),
-    ("pcv.py.demo", "1.2.3",
+    ("pcv.stat", "9.9.9", "a" * 64, "PCV-F0RX-91SY-Q9TT"),
+    ("pcv.official.guide", "9.9.9", "b" * 64, "PCV-8F5T-AFE7-ME62"),
+    ("pcv.py.demo", "9.9.9",
      "f2011e377c0e03af9c4e9a2bf969d19bc0ccff5e6c510fd1abbfb9f745d93487",
-     "PCV-ZHBN-D2TM-QSFN"),
-    ("pcl.core", "1.0.0", "0" * 64, "PCV-YH0B-Z6RP-0G4Z"),
+     "PCV-78ZV-DG83-75G1"),
+    ("pcl.core", "9.9.9", "0" * 64, "PCV-ZVXQ-469R-1EGR"),
     ("x.y", "", "c" * 64, "PCV-QJNM-046Q-CNV2"),
 ]
 
@@ -110,6 +115,29 @@ def check_loose() -> list[str]:
         errors.append("same() 没容忍大小写与连字符差异")
     if module_code.same("PCV-2WRM-CMN2-24WT", "PCV-2WRM-CMN2-24WU"):
         errors.append("same() 把两个不同的号判成同一个了")
+    return errors
+
+
+def check_vectors_are_frozen() -> list[str]:
+    """向量里的版本号不能是「当前产品版本」。
+
+    刷版脚本会把仓库里出现的旧版本号整片换掉，向量首当其冲 ——
+    输入变了、期望值没跟着变，体检就红。这不是算法错，是测试值跟产品版本
+    耦合了。所以这里钉住：向量版本必须是 9.9.9 这种固定值。
+    """
+    errors = []
+    current = ""
+    installer = ROOT / "installer" / "PCV.Setup" / "Installer.cs"
+    match = re.search(r'public const string Version\s*=\s*"([\d.]+)"',
+                      read(installer))
+    if match:
+        current = match.group(1)
+
+    for module_id, version, _sha, _code in GOLDEN:
+        if version and version == current:
+            errors.append("金标准向量 %s 用了当前产品版本 %s —— "
+                          "刷版时会被替换掉导致向量失效，改成 9.9.9 这类固定值"
+                          % (module_id, version))
     return errors
 
 
@@ -226,6 +254,7 @@ def check(root: Path) -> list[str]:
         errors += check_alphabet()
         errors += check_vectors()
         errors += check_loose()
+        errors += check_vectors_are_frozen()
         errors += check_cs_constants()
         errors += check_creator_contract()
         errors += check_dual_channel()

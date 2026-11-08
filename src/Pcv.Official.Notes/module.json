@@ -1,7 +1,7 @@
 {
   "id": "pcv.official.notes",
   "name": "随手记",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "assembly": "Pcv.Official.Notes.dll",
   "entry": "Pcv.Official.Notes.Entry",
   "dependencies": [

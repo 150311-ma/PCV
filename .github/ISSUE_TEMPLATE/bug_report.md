@@ -27,7 +27,7 @@ assignees: ''
 | --- | --- |
 | PCV 版本 | 标题栏或「版权」页里的版本号 |
 | Windows | 例：Windows 11 23H2 |
-| 相关模块 | 例：`pcv.stat` 3.0.0 |
+| 相关模块 | 例：`pcv.stat` 3.1.0 |
 | 语言 | 例：Python 3.13 / .NET Framework 4.8 |
 
 ## 日志
