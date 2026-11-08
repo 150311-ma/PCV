@@ -26,8 +26,20 @@ namespace Pcv.Shell
         public string Sha256 { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
 
+        // ── 社区来源（GitHub）用到的字段；官方清单不会填 ──────────────────
+        /// <summary>模块数字：PCV-XXXX-XXXX-XXXX。由内容算出来，改一个字节就变。</summary>
+        public string ModuleCode { get; set; }
+        /// <summary>发布者仓库，owner/name。</summary>
+        public string Repo { get; set; }
+        /// <summary>仓库分支，默认 main。</summary>
+        public string Branch { get; set; }
+
         [JsonIgnore] public string Source { get; set; }
         [JsonIgnore] public bool Offline { get; set; }
+
+        /// <summary>是不是社区模块（决定下载走 raw.githubusercontent 而不是博客）。</summary>
+        [JsonIgnore]
+        public bool FromGitHub => !string.IsNullOrWhiteSpace(Repo);
 
         public string SizeText => Size <= 0 ? "" : (Size / 1024.0).ToString("0.#") + " KB";
         public string IconText => string.IsNullOrWhiteSpace(Icon)
@@ -247,30 +259,53 @@ namespace Pcv.Shell
             var folder = Path.Combine(Path.GetTempPath(), "pcv-market");
             Directory.CreateDirectory(folder);
             var target = Path.Combine(folder, item.File);
-            var url = BaseUrl + Uri.EscapeDataString(item.File);
+
+            // 社区模块有两条下载路：raw.githubusercontent 优先，不通退 api.github.com。
+            // 国内到 raw 经常半死不活（握手过了正文零字节），只留一条路用户就会说「装不上」。
+            var candidates = item.FromGitHub
+                ? new[]
+                {
+                    GitHubSource.RawUrl(item.Repo, item.Branch, item.File),
+                    GitHubSource.ApiFileUrl(item.Repo, item.Branch, item.File),
+                }
+                : new[] { BaseUrl + Uri.EscapeDataString(item.File) };
 
             string lastError = "原因不明";
-            for (var attempt = 1; attempt <= MaxAttempts; attempt++)
+            foreach (var url in candidates)
             {
-                try
+                for (var attempt = 1; attempt <= MaxAttempts; attempt++)
                 {
-                    DownloadFile(url + "?n=" + attempt, target);
-                    var info = new FileInfo(target);
-                    if (item.Size > 0 && info.Length != item.Size)
-                        throw new InvalidDataException($"大小和清单对不上（{info.Length} ≠ {item.Size}）");
-                    if (!string.IsNullOrWhiteSpace(item.Sha256))
+                    try
                     {
-                        var actual = Sha256(target);
-                        if (!string.Equals(actual, item.Sha256.Trim(), StringComparison.OrdinalIgnoreCase))
-                            throw new InvalidDataException("校验和不匹配");
+                        DownloadFile(url + (url.Contains("?") ? "&" : "?") + "n=" + attempt, target,
+                            item.FromGitHub && url.IndexOf("api.github.com", StringComparison.OrdinalIgnoreCase) >= 0);
+                        var info = new FileInfo(target);
+                        if (item.Size > 0 && info.Length != item.Size)
+                            throw new InvalidDataException($"大小和清单对不上（{info.Length} ≠ {item.Size}）");
+                        if (!string.IsNullOrWhiteSpace(item.Sha256))
+                        {
+                            var actual = Sha256(target);
+                            if (!string.Equals(actual, item.Sha256.Trim(), StringComparison.OrdinalIgnoreCase))
+                                throw new InvalidDataException("校验和不匹配");
+                        }
+                        // 社区模块再核一次模块数字：清单里写的号必须等于「内容算出来的号」。
+                        // 光对 sha256 只证明「和清单说的一致」，核号才证明「和创作者发布的是同一个」。
+                        if (item.FromGitHub && !string.IsNullOrWhiteSpace(item.ModuleCode))
+                        {
+                            var actualCode = Pcv.Modular.Packages.ModuleCode.Compute(
+                                item.Id, item.Version, Sha256(target));
+                            if (!Pcv.Modular.Packages.ModuleCode.Same(actualCode, item.ModuleCode))
+                                throw new InvalidDataException(
+                                    "模块数字对不上（清单 " + item.ModuleCode + "，实际 " + actualCode + "）");
+                        }
+                        return target;
                     }
-                    return target;
-                }
-                catch (Exception ex)
-                {
-                    lastError = Short(ex.Message);
-                    try { if (System.IO.File.Exists(target)) System.IO.File.Delete(target); }
-                    catch { /* 删不掉覆盖写也行 */ }
+                    catch (Exception ex)
+                    {
+                        lastError = Short(ex.Message);
+                        try { if (System.IO.File.Exists(target)) System.IO.File.Delete(target); }
+                        catch { /* 删不掉覆盖写也行 */ }
+                    }
                 }
             }
             throw new InvalidDataException($"下载 {MaxAttempts} 次都没拿到完整的包：" + lastError);
@@ -309,9 +344,16 @@ namespace Pcv.Shell
                 return reader.ReadToEnd();
         }
 
-        private static void DownloadFile(string url, string target)
+        private static void DownloadFile(string url, string target, bool apiRaw = false)
         {
-            using (var response = (HttpWebResponse)Request(url).GetResponse())
+            var request = Request(url);
+            if (apiRaw)
+            {
+                // 不带这个头，api.github.com 回的是 base64 包装的 JSON，不是文件本体
+                request.Accept = "application/vnd.github.raw";
+                request.Headers["X-GitHub-Api-Version"] = "2022-11-28";
+            }
+            using (var response = (HttpWebResponse)request.GetResponse())
             using (var stream = response.GetResponseStream())
             using (var file = System.IO.File.Create(target))
                 stream.CopyTo(file);

@@ -741,12 +741,56 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="市场" Style="{StaticResource PageTitle}" />
-                                    <TextBlock Text="官方做好的包，点一下就下载、校验、装到桌面。"
+                                    <TextBlock Text="官方做好的包 + 大家发在 GitHub 上的模块，点一下就下载、校验、装到桌面。"
                                                Style="{StaticResource PageSubtitle}" Margin="0,6,0,0" />
                                 </StackPanel>
-                                <Button Content="刷新" Width="80" HorizontalAlignment="Right" VerticalAlignment="Top"
-                                        Style="{StaticResource GhostButton}" Click="BtnMarketRefresh_Click" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <Button x:Name="BtnCreator" Content="创作者工具" Width="96" Margin="0,0,8,0"
+                                            Style="{StaticResource GhostButton}" Click="BtnCreator_Click" />
+                                    <Button Content="刷新" Width="80"
+                                            Style="{StaticResource GhostButton}" Click="BtnMarketRefresh_Click" />
+                                </StackPanel>
                             </Grid>
+
+                            <!-- 两个来源：官方走博客，社区走 GitHub。默认官方，切成 GitHub 才发请求。 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button x:Name="BtnSourceOfficial" Content="官方" Width="72" Height="30"
+                                        Click="BtnSourceOfficial_Click">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button x:Name="BtnSourceGitHub" Content="GitHub" Width="80" Height="30" Margin="8,0,0,0"
+                                        Click="BtnSourceGitHub_Click">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Border x:Name="PanSearch" Visibility="Collapsed" Margin="14,0,0,0"
+                                        Background="{DynamicResource TrmSurface}" BorderBrush="{DynamicResource TrmLine}"
+                                        BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}"
+                                        Height="30" VerticalAlignment="Center">
+                                    <Grid>
+                                        <TextBox x:Name="TxtSearch" Width="260" Height="28" BorderThickness="0"
+                                                 Background="{DynamicResource TrmTransparent}"
+                                                 Foreground="{DynamicResource TrmInk}"
+                                                 VerticalContentAlignment="Center" Padding="10,0"
+                                                 FontSize="{DynamicResource TrmTextControl}"
+                                                 KeyDown="TxtSearch_KeyDown"
+                                                 ToolTip="输入模块名，去 GitHub 上找" />
+                                        <TextBlock x:Name="LabSearchHint" Text="输入模块名，回车去 GitHub 上找"
+                                                   IsHitTestVisible="False" Margin="12,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource TrmTextControl}"
+                                                   Foreground="{DynamicResource TrmMeta}" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
 
                             <Border x:Name="PanMarketStatus" Background="{DynamicResource TrmOkSoft}" BorderBrush="{DynamicResource TrmOkSoft}"
                                     BorderThickness="1" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="13,10" Margin="0,18,0,12">
