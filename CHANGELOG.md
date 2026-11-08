@@ -6,6 +6,12 @@
 
 ## 进行中（未发版）
 
+_暂无。_
+
+---
+
+## 3.1.0 — 2026-11-09
+
 ### 界面按 TRM UI 重写
 
 **口径**：[Turing-Mirror/TRM-UI](https://github.com/Turing-Mirror/TRM-UI)（MIT）是

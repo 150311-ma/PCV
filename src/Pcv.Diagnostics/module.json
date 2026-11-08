@@ -1,7 +1,7 @@
 {
   "id": "pcv.diagnostics",
   "name": "环境自检",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "assembly": "Pcv.Diagnostics.dll",
   "entry": "pcv.diagnostics.Entry",
   "dependencies": [
