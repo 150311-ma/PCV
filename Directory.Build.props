@@ -1,0 +1,38 @@
+<!--
+  所有随包分发的程序集都加两条：
+
+  1. SuppressIldasmAttribute —— ildasm.exe 看到它就拒绝出 IL。
+     这是最「简易」的那一类反编译：随手导一份 IL 出来改改。
+     效果就到这里为止，专业反编译器不看它，别当反编译保护本身。
+
+  2. DebugType=none —— Release 产物不带符号文件。
+     符号文件（.pdb）里写着原始行号、局部变量名和源文件路径，
+     留着它等于把整个工程的地图一起发出去。
+
+  用属性而不是源码文件，是因为模块工程有 C# 也有 VB，
+  统一在 csproj 里加，一处改完全部生效。
+-->
+<Project>
+
+  <PropertyGroup>
+    <SuppressIldasm>true</SuppressIldasm>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.SuppressIldasmAttribute" />
+  </ItemGroup>
+
+  <!--
+    Release 不生成符号文件。
+
+    .pdb 里写着原始行号、局部变量名和源文件路径，等于把整个工程的地图
+    一起发出去；留着它，反编译的人连变量叫什么都知道。
+
+    Debug 仍然照常生成 —— 本地调试离不开它，要看堆栈行号就切 Debug 构建。
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+</Project>

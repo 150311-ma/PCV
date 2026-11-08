@@ -34,6 +34,13 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <!-- 创作者工具要现场把模块目录压成 .pclpkg，直接用 BCL 的 zip -->
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
   <!-- 图标走资源 URI（/assets/pcv.png），提示词嵌进程序集，拷丢了也还在 -->
   <ItemGroup>
     <Resource Include="..\..\assets\pcv-256.png" Link="assets\pcv.png" />

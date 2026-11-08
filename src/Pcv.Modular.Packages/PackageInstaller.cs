@@ -85,8 +85,15 @@ namespace Pcv.Modular.Packages
 
         // ── 检查 ────────────────────────────────────────────────────────────
 
-        /// <summary>只读检查：能不能装、装的是谁、有哪些隐患。不改动任何东西。</summary>
-        public PackageInspection Inspect(string packagePath)
+        /// <summary>
+        /// 只读检查：能不能装、装的是谁、有哪些隐患。不改动任何东西。
+        /// </summary>
+        /// <param name="requireInstalledDependencies">
+        /// 是否要求依赖已经装在本机。安装时必须是 true；
+        /// 创作者工具发布前检查时用 false —— 作者机器上不一定装了前置，
+        /// 但包本身得是完整的，这两件事要分开判。
+        /// </param>
+        public PackageInspection Inspect(string packagePath, bool requireInstalledDependencies = true)
         {
             var inspection = new PackageInspection { PackagePath = packagePath };
             if (!File.Exists(packagePath))
@@ -182,7 +189,12 @@ namespace Pcv.Modular.Packages
                     foreach (var dependency in manifest.Dependencies ?? new List<string>())
                     {
                         if (!Directory.Exists(Path.Combine(_modulesDirectory, dependency)))
-                            inspection.Errors.Add($"缺少前置框架：{dependency}（先安装它）");
+                        {
+                            if (requireInstalledDependencies)
+                                inspection.Errors.Add($"缺少前置框架：{dependency}（先安装它）");
+                            else
+                                inspection.Warnings.Add($"声明了前置框架 {dependency}；发布前不检查它装没装");
+                        }
                     }
 
                     if (manifest.LoadPriority < 0)

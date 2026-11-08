@@ -77,7 +77,11 @@ python tools/check_repo.py --inject-fault   :: 确认体检器自己没瞎
 模块自带的框架界面还有一部分沿用各自写死的字色，框架窗口用浅色画布承载，
 两套主题下都可读；这些界面本身暂不随主题变。
 
-## 市场：博客当服务端
+## 市场：两个来源
+
+市场页顶上有「官方 / GitHub」两个来源，默认官方，切过去才发请求。
+
+### 官方：博客当服务端
 
 PCV 从 `https://cyan-blog-2fk.pages.dev/market/index.json` 拉清单，包是同目录下的
 静态 `.pclpkg`。没有账号系统、没有数据库、没有上传接口 —— 就是几个静态文件，
@@ -87,13 +91,54 @@ PCV 从 `https://cyan-blog-2fk.pages.dev/market/index.json` 拉清单，包是�
 由 `tools/build_market.py` 现场从 `dist/` 算出来，不手抄。上架流程见
 [market/README.md](market/README.md)。
 
+### GitHub：谁做的模块都在他自己仓库里
+
+PCV **不存任何社区模块**。约定只有三条：
+
+1. 仓库打上 topic `pcv-module`；
+2. 仓库根目录放一份 `pcv-module.json`（字段见下）；
+3. `.pclpkg` 放在仓库里。
+
+在市场里切到「GitHub」，输入模块名回车，PCV 就按 topic 搜仓库、逐个读清单。
+读不到、字段不全、模块数字对不上的，直接跳过 —— 别人的仓库改不了，只能不信任。
+
+```json
+{
+  "schema": 1,
+  "id": "pcv.hello", "name": "打个招呼", "version": "1.0.0",
+  "author": "yourname", "summary": "一句话说清它是干什么的",
+  "category": "工具", "icon": "招", "accent": "#1370F3",
+  "file": "pcv.hello-1.0.0.pclpkg",
+  "size": 4936, "sha256": "…64 位十六进制…",
+  "moduleCode": "PCV-2WRM-CMN2-24WT"
+}
+```
+
+### 模块数字
+
+每个模块有一个 `PCV-XXXX-XXXX-XXXX` 的号，**从内容算出来**，不是谁分配的：
+
+```
+sha256( id + "\n" + 版本 + "\n" + 包的 sha256 ) → 前 60 位 → Crockford Base32
+```
+
+同样的模块、同样的字节，在任何机器上算出来都是同一个号；改一个字节，号就变。
+Crockford Base32 去掉了 `I L O U`，手抄不会把 `1` 认成 `I`、`0` 认成 `O`。
+凭这个号就能核对「拿到的是不是创作者发的那一份」。
+
+两端实现各一份（[`ModuleCode.cs`](src/Pcv.Modular.Packages/ModuleCode.cs) /
+[`tools/module_code.py`](tools/module_code.py)），`tools/check_module_code.py` 用金标准
+向量把两边钉在一起 —— 改算法必须同时改两处和向量，否则闸门会红。
+
 客户端的安全与可用性处理：
 
-- 下载完先比 `size` 与 `sha256`，再交给安装器查路径越界、id、依赖、宿主版本；
+- 下载完先比 `size` 与 `sha256`；社区模块再核一次模块数字，证明「和创作者发布的是同一个」；
 - 清单里的 `file` 只接受纯文件名，拼不出任意 URL；
 - 断网时退到「本地缓存 → 程序集内置清单」；离线时能看条目，安装会提示联网后再试；
 - 本机到 Cloudflare 这段偶发返回截断正文（HTTP 200 但只有几百字节），
-  所以清单和包都按「必须完整解析 / 校验通过」判定并重试 3 次。
+  所以清单和包都按「必须完整解析 / 校验通过」判定并重试 3 次；
+- `raw.githubusercontent.com` 在部分网络下也是半死不活（握手过了、正文零字节），
+  所以社区模块的清单和包都有 raw + `api.github.com` 两条路，任一条通就算成功。
 
 <p align="center">
   <img src="docs/screenshots/market.png" width="700" alt="市场页">
@@ -191,6 +236,22 @@ python tools/pack_module.py bin\Release dist\pcv.hello-1.0.0.pclpkg
 
 更省事的办法：让 AI 帮你写。把 [`assets/prompt-framework.md`](assets/prompt-framework.md) 整段丢给
 DeepSeek / ChatGPT，它会按格式生成一个完整的构建脚本，粘回 PCV 里就能装。
+
+## 创作者工具：发到自己的 GitHub
+
+PCV 里带一个「创作者工具」（市场页右上角），不用额外装东西。三步：
+
+1. **选模块** —— 选打包好的 `.pclpkg`，或直接选模块目录（里面有 `module.json` 的那种，
+   它会现场压成包）。它会顺手算出这个模块的数字，比如 `PCV-2WRM-CMN2-24WT`。
+2. **填仓库和令牌** —— 仓库写成 `owner/name`；令牌要一个勾了 `repo` 的 classic token，
+   窗口里有直达链接。令牌只在这台机器上用一次，不写进任何文件、不上传别处。
+3. **上传并发布** —— 它做三件事：把包传进仓库、写 / 更新 `pcv-module.json`、
+   给仓库打 `pcv-module` 标记。做完别人在市场里切到 GitHub 搜名字就能装。
+
+发布前会走**和安装时同一套校验**（[`PackageInstaller.Inspect`](src/Pcv.Modular.Packages/PackageInstaller.cs)），
+不另写一份规则 —— 能通过发布检查的包，别人一定装得上。唯一的区别：
+发布检查不要求前置框架已经装在**你这台机器**上（作者机器上不一定装了）。
+
 
 ## 目录
 

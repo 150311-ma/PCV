@@ -35,3 +35,13 @@ jobs:
         run: python tools/check_trm_theme.py
       - name: 主题体检器自检（注入故障，确认它会报红）
         run: python tools/check_trm_theme.py --inject-fault
+      - name: 安全系统体检
+        run: python tools/check_security.py
+      - name: 安全体检器自检（注入故障，确认它会报红）
+        run: python tools/check_security.py --inject-fault
+      - name: 模块数字与社区市场体检
+        run: python tools/check_module_code.py
+      - name: 模块数字体检器自检（注入故障，确认它会报红）
+        run: python tools/check_module_code.py --inject-fault
+      - name: 文件指纹校验器自检（注入故障，确认它会报红）
+        run: python tools/build_integrity.py --inject-fault
