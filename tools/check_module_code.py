@@ -217,6 +217,53 @@ def check_creator_contract() -> list[str]:
     return errors
 
 
+def check_package_size_is_file_size() -> list[str]:
+    """清单里的 size 必须是 `.pclpkg` 文件大小，不是解压后总长。
+
+    这两者差得很远（压缩比），写错了市场下载完就报「大小和清单对不上」，
+    所有社区模块都装不上。真踩过：`PackageInspection.TotalBytes` 是解压总长，
+    被当成包大小写进了清单（4960 的包写成 9616）。
+    """
+    errors = []
+    creator = read(CREATOR_CS)
+    if not creator:
+        return ["缺少创作者工具：src/Pcv.Shell/CreatorWindow.xaml.cs"]
+
+    if "result.Size = inspection.TotalBytes" in creator:
+        errors.append("清单里的 size 取了 inspection.TotalBytes（解压后总长）—— "
+                      "市场比的是包文件大小，会导致所有社区模块装不上")
+    if "result.Size = new FileInfo(path).Length" not in creator:
+        errors.append("找不到「用包文件大小填 size」的写法")
+    return errors
+
+
+def check_cleanup_on_upgrade() -> list[str]:
+    """升级发布时必须清掉同模块的旧版包。
+
+    不清的话每发一版就在仓库里多留一个 .pclpkg —— 仓库越攒越肥，
+    别人还不知道哪个是当前的。这是真踩出来的：3.0.0 → 3.1.0 时
+    仓库里留下了两个旧包，只能手动删。
+    """
+    errors = []
+    creator = read(CREATOR_CS)
+    if not creator:
+        return ["缺少创作者工具：src/Pcv.Shell/CreatorWindow.xaml.cs"]
+
+    if "RemoveOldPackagesAsync" not in creator:
+        errors.append("创作者工具升级发布时没有清理旧版包 —— 仓库会越攒越肥")
+        return errors
+
+    # 必须按 `id-` 前缀精确匹配，不能见 .pclpkg 就删（会误伤别的模块）
+    if 'package.Id + "-"' not in creator:
+        errors.append("清理旧包没有按 `模块id-` 前缀匹配 —— 会误删别人的包")
+    if "EndsWith(\".pclpkg\"" not in creator:
+        errors.append("清理旧包没有校验 .pclpkg 后缀")
+    # 当前这份不能被删
+    if "package.FileName, StringComparison.OrdinalIgnoreCase)) continue" not in creator:
+        errors.append("清理旧包没有跳过当前版本 —— 会把刚传上去的包删掉")
+    return errors
+
+
 def check_dual_channel() -> list[str]:
     """raw 与 api 两条下载路都要在，缺一条国内用户就装不上。"""
     errors = []
@@ -257,6 +304,8 @@ def check(root: Path) -> list[str]:
         errors += check_vectors_are_frozen()
         errors += check_cs_constants()
         errors += check_creator_contract()
+        errors += check_package_size_is_file_size()
+        errors += check_cleanup_on_upgrade()
         errors += check_dual_channel()
         return errors
     finally:
