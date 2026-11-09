@@ -99,6 +99,36 @@ def check(root: Path) -> list[str]:
                 errors.append("安全自检跑在模块加载之后了 —— 得往前挪，"
                               "第三方程序集进了进程就来不及了")
 
+    # 2.5) 外部模块判定必须放行「天生会挂进别人进程」的组件
+    #
+    # 这是真误报出来的：第一版只认「C:\Windows 下」和「PCV 目录下」，
+    # 装了微信输入法的机器一启动就报「进程里被塞进了外部模块」——
+    # 输入法通过 SetWindowsHookEx 把自己的 dll 挂进每个有窗口的进程，这是正常行为。
+    # 同理还有 Windows 自带的 tpcps.dll（在 Program Files\Common Files 下）。
+    #
+    # 闸门不做「有没有写某个词」这种弱检查，而是要求判定链里真的存在放行逻辑，
+    # 并且 TrustedMarkers 里必须覆盖输入法与 Common Files。
+    if guard:
+        if "IsTrustedByNature" not in guard:
+            errors.append("外部模块判定没有「天生会注入的组件」放行逻辑 —— "
+                          "装了第三方输入法的机器一启动就会误报")
+        markers = re.search(r"TrustedMarkers\s*=\s*\{(.*?)\};", guard, re.S)
+        if not markers:
+            errors.append("找不到 TrustedMarkers 名单")
+        else:
+            body = markers.group(1).lower()
+            for what, needle in (
+                ("微信输入法", "wetype"),
+                ("搜狗输入法", "sogou"),
+                ("Windows 手写/平板输入组件", "microsoft shared"),
+            ):
+                if needle not in body:
+                    errors.append("TrustedMarkers 里没有放行「%s」—— 这类 dll 会挂进每个进程"
+                                  % what)
+        # 放行不等于全放：仍然要保留「不属于系统 / 不属于自身目录」这两道
+        if "!IsSystemPath(p)" not in guard or "!IsAppPath(p)" not in guard:
+            errors.append("外部模块判定丢掉了系统目录 / 自身目录的白名单 —— 会把系统 dll 全报成入侵")
+
     # 3) 检出之后要弹窗 + 结束进程
     if guard:
         if "SecurityAlertWindow" not in guard:
@@ -180,6 +210,9 @@ def inject_fault() -> int:
         ("Release 又开始带符号", "Directory.Build.props",
          lambda text: text.replace("<DebugType>none</DebugType>",
                                    "<DebugType>portable</DebugType>")),
+        ("输入法放行被摘掉（会误报注入）", "src/Pcv.Shell/SecurityGuard.cs",
+         lambda text: text.replace('@"\\wetype\\",', '')
+                           .replace('@"\\sogouinput\\",', '')),
     ]
 
     caught = 0

@@ -1,7 +1,7 @@
 {
   "id": "pcv.demo.hello",
   "name": "示例框架",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "assembly": "Pcv.Demo.Hello.dll",
   "entry": "Pcv.Demo.Hello.HelloModule",
   "dependencies": [

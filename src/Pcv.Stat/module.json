@@ -1,7 +1,7 @@
 {
   "id": "pcv.stat",
   "name": "使用统计",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "assembly": "Pcv.Stat.dll",
   "entry": "pcv.stat.Entry",
   "dependencies": [

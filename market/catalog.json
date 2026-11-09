@@ -13,7 +13,7 @@
       "accent": "#1370F3",
       "official": true,
       "tags": ["官方", "入门"],
-      "file": "pcv.official.guide-3.1.0.pclpkg"
+      "file": "pcv.official.guide-3.1.1.pclpkg"
     },
     {
       "id": "pcv.official.notes",
@@ -25,7 +25,7 @@
       "accent": "#0E9F6E",
       "official": true,
       "tags": ["官方", "工具"],
-      "file": "pcv.official.notes-3.1.0.pclpkg"
+      "file": "pcv.official.notes-3.1.1.pclpkg"
     },
     {
       "id": "pcv.official.dock",
@@ -37,7 +37,7 @@
       "accent": "#7A5AF8",
       "official": true,
       "tags": ["官方", "工具"],
-      "file": "pcv.official.dock-3.1.0.pclpkg"
+      "file": "pcv.official.dock-3.1.1.pclpkg"
     },
     {
       "id": "pcv.stat",
@@ -49,7 +49,7 @@
       "accent": "#1370F3",
       "official": true,
       "tags": ["官方", "统计"],
-      "file": "Pcv.Stat-3.1.0.pclpkg"
+      "file": "Pcv.Stat-3.1.1.pclpkg"
     },
     {
       "id": "pcv.cleaner",
@@ -61,7 +61,7 @@
       "accent": "#0E9F6E",
       "official": true,
       "tags": ["官方", "维护"],
-      "file": "Pcv.Cleaner-3.1.0.pclpkg"
+      "file": "Pcv.Cleaner-3.1.1.pclpkg"
     },
     {
       "id": "pcv.diagnostics",
@@ -73,7 +73,7 @@
       "accent": "#7A5AF8",
       "official": true,
       "tags": ["官方", "诊断"],
-      "file": "Pcv.Diagnostics-3.1.0.pclpkg"
+      "file": "Pcv.Diagnostics-3.1.1.pclpkg"
     }
   ]
 }

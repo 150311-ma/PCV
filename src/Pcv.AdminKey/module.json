@@ -1,7 +1,7 @@
 {
   "id": "pcv.adminkey",
   "name": "在线凭据",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "assembly": "Pcv.AdminKey.dll",
   "entry": "Pcv.AdminKey.Entry",
   "category": "framework",

@@ -211,8 +211,18 @@ namespace Pcv.Shell
         }
 
         /// <summary>
-        /// 干净时记下的模块之外，又冒出来一个不属于系统目录、也不属于 PCV
-        /// 自己目录的 dll —— 那多半是被人塞进来的。
+        /// 干净时记下的模块之外，又冒出来一个「不像话」的 dll —— 那多半是被人塞进来的。
+        ///
+        /// 判据要保守，宁可漏也不能误报。第一版只认「C:\Windows 下」和「PCV 目录下」，
+        /// 结果装微信输入法的机器上必然报警：输入法通过 SetWindowsHookEx 把自己的
+        /// dll 挂进每一个有窗口的进程，`Program Files\Tencent\WeType\...` 这种路径
+        /// 既不在 Windows 目录、也不在 PCV 目录 —— 于是一启动就弹「进程里被塞进了
+        /// 外部模块」。同理还有 Windows 自带的平板输入组件
+        /// `Program Files\Common Files\microsoft shared\ink\tpcps.dll`。
+        ///
+        /// 现在放行四类：系统目录、Program Files 下的系统组件、输入法（IME）目录、
+        /// PCV 自己的目录。真正的注入器一般从临时目录、用户目录、或者某个
+        /// 来路不明的文件夹加载，这些仍然会被抓。
         /// </summary>
         private static IEnumerable<Threat> CheckForeignModules()
         {
@@ -223,11 +233,12 @@ namespace Pcv.Shell
             var current = SnapshotModules();
             var intruders = current.Where(p => !baseline.Contains(p)
                                              && !IsSystemPath(p)
-                                             && !IsAppPath(p)).ToList();
+                                             && !IsAppPath(p)
+                                             && !IsTrustedByNature(p)).ToList();
             if (intruders.Count == 0) yield break;
 
             yield return new Threat(ThreatLevel.Fatal, "进程里被塞进了外部模块",
-                "下面这些文件不属于 Windows，也不属于 PCV 自己的目录，却出现在 PCV 的进程里：\n"
+                "下面这些文件既不属于 Windows，也不属于 PCV 自己的目录，却出现在 PCV 的进程里：\n"
                 + string.Join("\n", intruders.Take(4))
                 + "\n请关掉注入类工具后重新启动 PCV。");
         }
@@ -235,8 +246,70 @@ namespace Pcv.Shell
         private static bool IsSystemPath(string path)
         {
             var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-            return path.StartsWith(windows, StringComparison.OrdinalIgnoreCase);
+            if (path.StartsWith(windows, StringComparison.OrdinalIgnoreCase)) return true;
+
+            // Program Files 下的系统组件不在 Windows 目录里，但它们是微软自己的东西
+            foreach (var folder in new[]
+                     {
+                         Environment.SpecialFolder.ProgramFiles,
+                         Environment.SpecialFolder.ProgramFilesX86,
+                         Environment.SpecialFolder.CommonProgramFiles,
+                         Environment.SpecialFolder.CommonProgramFilesX86,
+                     })
+            {
+                var root = Environment.GetFolderPath(folder);
+                if (!string.IsNullOrEmpty(root)
+                    && path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Program Files 太宽（谁都往这儿装），只放行认得出的系统组件
+                    return IsKnownSystemComponent(path);
+                }
+            }
+            return false;
         }
+
+        /// <summary>Program Files 下这些位置属于系统/输入法，不该当注入看待。</summary>
+        private static bool IsKnownSystemComponent(string path)
+        {
+            var lowered = path.ToLowerInvariant();
+            foreach (var marker in TrustedMarkers)
+                if (lowered.IndexOf(marker, StringComparison.Ordinal) >= 0) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 天生就会挂进别人进程的东西。
+        ///
+        /// 输入法是最典型的：它必须用 SetWindowsHookEx 挂进前台窗口的进程才能
+        /// 收到按键，这是正常行为，不是注入。装了第三方输入法的用户是多数，
+        /// 把这些当威胁等于「装了输入法就不能用 PCV」。
+        /// </summary>
+        private static bool IsTrustedByNature(string path)
+        {
+            return IsKnownSystemComponent(path);
+        }
+
+        /// <summary>
+        /// 认得出的「天生会注入」组件。只为放行，不参与判定威胁。
+        /// 命中一条就跳过。
+        /// </summary>
+        private static readonly string[] TrustedMarkers =
+        {
+            // Windows 自带的平板/手写输入组件
+            @"\common files\microsoft shared\ink\",
+            @"\common files\microsoft shared\ink",
+            // 第三方输入法（用户装了就得让它工作）
+            @"\wetype\",          // 微信输入法
+            @"\sogouinput\",      // 搜狗
+            @"\qqpinyin\",        // QQ 拼音
+            @"\baidu\baidupinyin",
+            @"\iflytek\",         // 讯飞
+            @"\rime\",            // 小狼毫
+            @"\mstsc",
+            // 系统外壳扩展（任务栏、缩略图、通知）
+            @"\common files\microsoft shared\",
+            @"\windowsapps\",
+        };
 
         private static bool IsAppPath(string path)
         {
@@ -374,8 +447,16 @@ namespace Pcv.Shell
 
             // 检出即落日志：弹窗在等用户点击时进程是活的，
             // 出了事要能查得到当时到底检出了什么。
+            // 只写标题是不够的 —— 「被塞进了外部模块」不说是哪几个文件，
+            // 用户没法判断该关什么，我们也复现不了。所以连明细一起写。
             WriteLog("检出 " + fatal.Count + " 项异常："
                      + string.Join("；", fatal.Select(t => t.Title)));
+            foreach (var threat in fatal)
+            {
+                if (string.IsNullOrWhiteSpace(threat.Detail)) continue;
+                foreach (var line in threat.Detail.Split('\n'))
+                    if (!string.IsNullOrWhiteSpace(line)) WriteLog("    " + line.Trim());
+            }
 
             var window = new SecurityAlertWindow(fatal);
             try { window.ShowDialog(); }
