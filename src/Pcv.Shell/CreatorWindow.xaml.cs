@@ -231,11 +231,14 @@ namespace Pcv.Shell
 
                 PanResult.Visibility = Visibility.Visible;
                 LabResultTitle.Text = result.Updated ? "更新好了" : "发布好了";
+                var removedLine = result.Removed.Count == 0
+                    ? ""
+                    : "\n顺手清掉了 " + result.Removed.Count + " 个旧版包：" + string.Join("、", result.Removed);
                 LabResultBody.Text =
                     "仓库：" + result.Repo + "（" + result.Branch + "）\n"
                     + "模块数字：" + _current.Code + "\n"
                     + "别人在市场里切到 GitHub，搜「" + _current.Name + "」就能找到。\n"
-                    + "仓库里现在有：" + string.Join("、", result.Files);
+                    + "仓库里现在有：" + string.Join("、", result.Files) + removedLine;
                 LabHint.Text = "发好了。把模块数字发给朋友，他们也能核对拿到的是不是这一份。";
                 LabBusy.Text = "";
 
@@ -392,7 +395,11 @@ namespace Pcv.Shell
             result.Category = manifest.CategoryLabel;
             result.IconText = manifest.Icon;
             result.Accent = manifest.Accent;
-            result.Size = inspection.TotalBytes;
+            // 注意用「包文件本身的大小」，不是 inspection.TotalBytes。
+            // TotalBytes 是**解压后**的总字节数（给「解压会不会太大」那条检查用的），
+            // 而市场下载后比的是 `.pclpkg` 文件大小。用错就会写出一个永远对不上的
+            // size，别人一装就报「大小和清单对不上」——这个坑真踩过。
+            result.Size = new FileInfo(path).Length;
             result.Sha256 = inspection.Sha256;
             result.EntryCount = inspection.EntryCount;
             result.FileName = manifest.Id + "-" + manifest.Version + ".pclpkg";
@@ -453,6 +460,8 @@ namespace Pcv.Shell
             public string Branch { get; set; }
             public bool Updated { get; set; }
             public List<string> Files { get; } = new List<string>();
+            /// <summary>这次顺手清掉的旧版包。</summary>
+            public List<string> Removed { get; } = new List<string>();
         }
 
         public async Task<Result> PublishAsync(CreatorPackage package, string repo, string branch,
@@ -484,12 +493,72 @@ namespace Pcv.Shell
             result.Updated = updated;
             result.Files.Add(GitHubSource.ManifestName);
 
-            // 3) 打 topic
+            // 3) 清掉同一个模块的旧版包
+            //
+            // 不清的话，每发一版就在仓库里留一个 .pclpkg：占空间、`git clone` 越来越大，
+            // 而且别人看到一堆文件不知道哪个才是当前的（清单只指向最新的那份）。
+            // 只删「同 id 的其他版本」，别的模块的文件一根手指都不碰。
+            progress?.Report("正在清理旧版包…");
+            var removed = await RemoveOldPackagesAsync(repo, repoInfo.DefaultBranch, package).ConfigureAwait(true);
+            result.Removed.AddRange(removed);
+
+            // 4) 打 topic
             progress?.Report("正在给仓库打 pcv-module 标记…");
             await PutTopicsAsync(repo).ConfigureAwait(true);
 
             progress?.Report("发好了");
             return result;
+        }
+
+        /// <summary>
+        /// 删掉同一模块的旧版本包（<id>-<旧版本>.pclpkg）。
+        ///
+        /// 判据是「文件名以 `id-` 开头、以 `.pclpkg` 结尾、且不是这次发的那个」。
+        /// 为什么按文件名而不按清单：清单只记当前版本，历史文件根本读不到版本号。
+        /// 删错了代价很大（把别人的包删了），所以前缀必须精确到 `id-`，
+        /// 而且跳过所有不属于这个 id 的文件。
+        /// </summary>
+        private async Task<List<string>> RemoveOldPackagesAsync(string repo, string branch, CreatorPackage package)
+        {
+            var removed = new List<string>();
+            var prefix = package.Id + "-";
+            var url = ApiRoot + "/repos/" + repo + "/contents/?ref=" + Uri.EscapeDataString(branch);
+
+            List<ContentEntry> entries;
+            try
+            {
+                var json = await SendAsync("GET", url, null).ConfigureAwait(true);
+                entries = JsonConvert.DeserializeObject<List<ContentEntry>>(json) ?? new List<ContentEntry>();
+            }
+            catch (GitHubException) { return removed; }
+
+            foreach (var entry in entries)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Name) || string.IsNullOrWhiteSpace(entry.Sha))
+                    continue;
+                if (!entry.Name.EndsWith(".pclpkg", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!entry.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+                if (string.Equals(entry.Name, package.FileName, StringComparison.OrdinalIgnoreCase)) continue;
+
+                try
+                {
+                    await SendAsync("DELETE", ApiRoot + "/repos/" + repo + "/contents/"
+                        + Uri.EscapeDataString(entry.Name),
+                        JsonConvert.SerializeObject(new
+                        {
+                            message = "删除旧版包 " + entry.Name + "（当前版本 " + package.Version + "）",
+                            sha = entry.Sha,
+                            branch,
+                        })).ConfigureAwait(true);
+                    removed.Add(entry.Name);
+                }
+                catch (GitHubException)
+                {
+                    // 旧包删不掉不影响这次发布：清单已经指向新包了。
+                    // 但要在界面上说一声，不然仓库会越攒越肥还没人知道。
+                }
+            }
+            return removed;
         }
 
         // ── HTTP ───────────────────────────────────────────────────────────
@@ -563,6 +632,14 @@ namespace Pcv.Shell
         private sealed class ContentDocument
         {
             [JsonProperty("sha")] public string Sha { get; set; }
+        }
+
+        /// <summary>列目录时的一条。只取用得到的字段。</summary>
+        private sealed class ContentEntry
+        {
+            [JsonProperty("name")] public string Name { get; set; }
+            [JsonProperty("sha")] public string Sha { get; set; }
+            [JsonProperty("type")] public string Type { get; set; }
         }
 
         private async Task<string> SendAsync(string method, string url, string body)
