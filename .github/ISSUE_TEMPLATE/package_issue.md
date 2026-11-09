@@ -10,7 +10,7 @@ assignees: ''
 
 | 项 | 值 |
 | --- | --- |
-| 包名（含版本） | 例：`pcv.mc.launcher-3.1.1.pclpkg` |
+| 包名（含版本） | 例：`pcv.mc.launcher-3.2.0.pclpkg` |
 | 来源 | 自己做的 / 官方 dist / 别人给的 / AI 生成的 |
 | 模块 Id | 例：`pcv.mc.launcher` |
 

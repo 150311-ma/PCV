@@ -1,7 +1,7 @@
 {
   "id": "pcv.official.dock",
   "name": "快捷面板",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "assembly": "Pcv.Official.Dock.dll",
   "entry": "Pcv.Official.Dock.Entry",
   "dependencies": [

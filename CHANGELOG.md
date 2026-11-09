@@ -6,6 +6,56 @@
 
 ## 进行中（未发版）
 
+_暂无。_
+
+---
+
+## 3.2.0 — 2026-11-09
+
+### 客户端不再持有任何密钥（凭证改为服务端校验）
+
+用户原话：「你把管理员密码直接贴在 PCV 客户端里，这不就相当于掩耳盗铃吗？」
+说得对，而且实际情况比这句话还糟。
+
+**以前的链路（四处都错）**：
+
+1. `pcv-api/catalog.json` 里有 `accessKey: "pcv-admin-2026"`，明文躺在**公开仓库**里；
+2. 它被 `build_pcv_api.py` 写进 `interfaces.json`，**内嵌进 exe**；
+3. 客户端拿它去 `/pcv-api/admin-key` 换维护凭证 —— 谁 clone 一下就能换到；
+4. 换到之后还是**本地比对**（`input == info.Key`），程序自己知道答案，
+   「输入凭证」纯属表演。
+
+更糟的是线上 `PCV_ADMIN_SECRET` 从来没配过，跑的是代码里的默认值
+`pcv-local-admin-secret`。我离线复刻 Worker 的 HMAC 算出凭证，和线上**完全一致**
+——等于不需要任何密钥也能算出任意时刻的码。
+
+**现在的形状**：
+
+- 删掉 `/pcv-api/admin-key`（那条「用共享密钥换凭证」的路），实测线上返回 404；
+- 新增 `POST /pcv-api/verify`：客户端把用户输入的 6 位数发过去，服务端判对错。
+  **客户端一行秘密都不留**；
+- 客户端侧删掉 `accessKey` 概念：`IApiGateway.AccessKey`、`SetAccessKey`、
+  `X-PCV-Api-Key` 头、API 页那块「② 接入密钥」UI，全部移除；
+- `catalog.json` 不再有 `accessKey`，`build_pcv_api.py` 也不再生成它，
+  发现旧格式会直接报红；
+- 线上 `PCV_ADMIN_SECRET` 换成了 32 字节随机值（production + preview 两套环境都设）；
+- 老版本留在用户机器上的 `PCLData/frameworks/pcv.api/interfaces.json` 缓存里
+  带 `accessKey`，加载时发现就删掉重拉 —— 光忽略不够，文件还躺在那里谁都能看。
+
+**代价（有意的）**：解锁维护模式必须联网。断网解不开。
+
+`/pcv-api/verify` 加了失败限流（同 IP 连错 8 次锁 10 分钟）：
+6 位数字只有 100 万种，不限流是能被枚举的。允许「上一格」的码也算对，
+照顾跨格子抄写的情况。
+
+`check_security.py` 加第 11 条闸门：客户端源码里出现
+`pcv-admin-2026` / `X-PCV-Api-Key` / `pcv-local-admin-secret` 直接报红。
+
+**验证**：线上旧接口 404；旧 secret 算出的码被拒；新 secret 算出的码通过；
+未登录调管理员接口仍 401（后台那条路没被弄坏）。
+
+---
+
 ### 入口收拢成 API 页 + 解锁手势收紧
 
 原来「服务设置」是单独一页，市场、更新、接口、外观四张卡竖着堆，一屏看不到底；

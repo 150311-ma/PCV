@@ -15,7 +15,7 @@
 
 ## 上架一个新包
 
-1. 把打好的 `.pclpkg` 放进 `dist/`，文件名带版本号（如 `pcv.foo-3.1.1.pclpkg`）。
+1. 把打好的 `.pclpkg` 放进 `dist/`，文件名带版本号（如 `pcv.foo-3.2.0.pclpkg`）。
 2. 在 `market/catalog.json` 的 `items` 里加一条，`file` 只写**纯文件名**。
 3. 跑 `python tools/build_market.py` 生成清单并自校验。
 4. 跑 `python tools/build_market.py --blog <博客项目根目录>` 把清单与包同步到

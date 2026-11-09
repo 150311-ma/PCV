@@ -5,7 +5,7 @@
 
 | 脚本 | 干什么 | 典型用法 |
 | --- | --- | --- |
-| `pack_module.py` | 把模块目录打成 `.pclpkg` | `python tools/pack_module.py src/Pcv.Stat/bin/Release dist/Pcv.Stat-3.1.1.pclpkg` |
+| `pack_module.py` | 把模块目录打成 `.pclpkg` | `python tools/pack_module.py src/Pcv.Stat/bin/Release dist/Pcv.Stat-3.2.0.pclpkg` |
 | `build_installer.py` | 构建整个方案 → 摆干净目录 → 打 payload → 编安装器 | `python tools/build_installer.py` |
 | `promo_style.py` | 宣传片共用样式：色值解析自 `TrmTheme.xaml`、版本读自 `Installer.cs` | 被三支宣传片脚本 import，不单独跑 |
 | `make_promo.py` | 用真实截图合成帧与宣传片（静音） | `python tools/make_promo.py` |

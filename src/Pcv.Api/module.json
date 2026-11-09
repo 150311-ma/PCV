@@ -1,7 +1,7 @@
 {
   "id": "pcv.api",
   "name": "API 接口",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "assembly": "Pcv.Api.dll",
   "entry": "Pcv.Api.Entry",
   "category": "framework",

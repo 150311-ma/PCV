@@ -1,8 +1,7 @@
 {
   "schema": 1,
-  "updated": "2026-11-08",
+  "updated": "2026-11-09",
   "site": "https://cyan-blog-2fk.pages.dev",
-  "accessKey": "pcv-admin-2026",
   "endpoints": [
     {
       "id": "market.index",
@@ -41,22 +40,13 @@
       "note": "服务设置里那张接口表，就是从这里拉下来的。"
     },
     {
-      "id": "pcv.adminKey",
-      "name": "凭证",
-      "method": "GET",
-      "path": "/pcv-api/admin-key",
-      "needsKey": true,
-      "enabled": true,
-      "note": "每 10 分钟轮换一次；请求要带接入密钥 X-PCV-Api-Key。"
-    },
-    {
       "id": "pcv.echo",
       "name": "连通性测试",
       "method": "POST",
       "path": "/pcv-api/echo",
-      "needsKey": true,
+      "needsKey": false,
       "enabled": true,
-      "note": "把请求原样回显，用来验证接口和密钥是不是真的通。"
+      "note": "连通性测试。只回显你发来的正文，不碰任何数据，所以不需要鉴权。"
     },
     {
       "id": "license.verify",

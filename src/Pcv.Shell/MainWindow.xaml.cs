@@ -47,7 +47,6 @@ namespace Pcv.Shell
         private bool _iconsMode = true;
         private bool _adminUnlocked;
         private bool _adminBusy;
-        private string _unlockKey = "";
 
         /// <summary>市场当前看的是哪一边：官方（博客）还是 GitHub（社区）。</summary>
         private MarketSource _marketSource = MarketSource.Official;
@@ -82,7 +81,6 @@ namespace Pcv.Shell
             ListAdminEndpoints.ItemsSource = _endpoints;
             LabVersion.Text = "PCV " + host.Host.Version;
             LabMarketSource.Text = "服务端：" + MarketService.MarketUrl;
-            TxtAdminAccessKey.Text = _gateway?.AccessKey ?? "";
 
             TrmThemeService.ThemeChanged += OnTrmThemeChanged;
             if (_gateway != null) _gateway.Changed += _ => OnUi(RefreshEndpoints);
@@ -1280,42 +1278,47 @@ namespace Pcv.Shell
         private void SyncMarketToggle()
             => BtnAdminToggleMarket.Content = _admin.MarketEnabled ? "关闭市场" : "开启市场";
 
+        /// <summary>
+        /// 刷新解锁区右上角的说明文字。
+        ///
+        /// 注意这里**不再显示凭证本身** —— 客户端根本拿不到它。
+        /// 凭证只在博客后台显示，用户抄过来输进去；桌面端只回一句「通过没有」。
+        /// </summary>
         private void RefreshAdminKeyView()
         {
             var info = _adminKey?.Current;
             if (info == null)
             {
-                LabAdminKey.Text = "—— —— ——";
-                LabAdminKeyExpire.Text = "凭据模块没加载";
+                LabAdminKeyExpire.Text = "凭证模块没加载";
                 LabAdminKeyError.Text = "";
                 return;
             }
-            LabAdminKey.Text = info.Online ? info.Key : "—— —— ——";
-            LabAdminKeyExpire.Text = info.Online
-                ? info.ExpiresText + " 后更换 · 服务器时间 " + info.ServerTime
-                : "等服务器回来再试";
-            LabAdminKeyError.Text = info.Online ? "" : "取不到凭证：" + info.Error;
+            if (info.Verified)
+            {
+                LabAdminKeyExpire.Text = info.ExpiresIn > 0
+                    ? "校验通过 · 这一格的凭证还有 " + info.ExpiresText
+                    : "校验通过";
+                LabAdminKeyError.Text = "";
+            }
+            else
+            {
+                LabAdminKeyExpire.Text = "凭证在博客后台「PCV 服务」里，6 位数字";
+                LabAdminKeyError.Text = info.Online ? "" : (info.Error ?? "");
+            }
         }
 
-        private void OnAdminKeyChanged()
-        {
-            RefreshAdminKeyView();
-            if (!_adminUnlocked) return;
-            var info = _adminKey?.Current;
-            if (info == null || !info.Online || !string.Equals(info.Key, _unlockKey, StringComparison.Ordinal))
-            {
-                LockAdmin(info != null && info.Online
-                    ? "服务器换了凭据，维护模式已自动退出，请用新凭据重新解锁"
-                    : "服务器断了，维护模式已自动退出");
-                return;
-            }
-            LabAdminRemain.Text = "当前凭证还有 " + info.ExpiresText + " 有效";
-        }
+        /// <summary>
+        /// 校验结果变化时只刷新文字，不再因为「服务器换了凭证」自动退出维护模式。
+        ///
+        /// 为什么改了：以前客户端知道当前凭证，所以能发现「码变了」并踢人。
+        /// 现在客户端不知道码，也就无从判断 —— 而且持续联网轮询本身没必要。
+        /// 已解锁的维护模式在本次会话内有效，退出由用户点「退出维护模式」。
+        /// </summary>
+        private void OnAdminKeyChanged() => RefreshAdminKeyView();
 
         private void LockAdmin(string reason)
         {
             _adminUnlocked = false;
-            _unlockKey = "";
             PanAdminLocked.Visibility = Visibility.Visible;
             PanAdminUnlocked.Visibility = Visibility.Collapsed;
             PanAdminTools.IsEnabled = false;
@@ -1332,7 +1335,7 @@ namespace Pcv.Shell
                 return;
             }
             LabAdminApiInfo.Text = "服务端 " + _gateway.Site + " · " + _gateway.Endpoints.Count
-                + " 个接口 · 接入密钥" + (string.IsNullOrEmpty(_gateway.AccessKey) ? "未设置" : "已设置");
+                + " 个接口";
             foreach (var ep in _gateway.Endpoints) _endpoints.Add(new EndpointCard(ep));
         }
 
@@ -1406,49 +1409,54 @@ namespace Pcv.Shell
         }
 
         // ── 解锁 / 退出 / 凭证 ──────────────────────────────────────────────
+        //
+        // 解锁判据完全在服务端：客户端把用户输入的 6 位数发过去，服务端用
+        // 只有它知道的 secret 算出当前凭证比对。客户端既不知道答案、
+        // 也不保存凭证 —— 所以「改客户端绕过」这条路是不成立的。
+        // 代价是必须联网，这是有意的。
 
-        private void BtnAdminUnlock_Click(object sender, RoutedEventArgs e)
+        private async void BtnAdminUnlock_Click(object sender, RoutedEventArgs e)
         {
-            if (_adminKey == null) { LabAdminKeyError.Text = "凭据模块没加载"; return; }
-            var info = _adminKey.Current;
-            if (info == null || !info.Online)
+            if (_adminKey == null) { LabAdminKeyError.Text = "凭证模块没加载"; return; }
+
+            var input = (TxtAdminKeyInput.Password ?? "").Trim();
+            if (input.Length == 0)
             {
-                LabAdminKeyError.Text = "服务器还没给凭证，断网时不能新解锁";
+                LabAdminKeyError.Text = "先填凭证：博客后台 → PCV 服务 → 当前凭证";
                 return;
             }
-            if (!_adminKey.Validate(TxtAdminKeyInput.Text))
+
+            LabAdminKeyError.Text = "正在问服务器…";
+            AdminKeyInfo info;
+            try
             {
-                LabAdminKeyError.Text = "凭证不对，请输入服务设置页当前显示的那一串";
+                info = await _adminKey.VerifyAsync(input);
+            }
+            catch (Exception ex)
+            {
+                LabAdminKeyError.Text = "校验出错：" + ex.Message;
                 return;
             }
+
+            if (info == null || !info.Verified)
+            {
+                LabAdminKeyError.Text = info != null && !string.IsNullOrWhiteSpace(info.Error)
+                    ? info.Error
+                    : "凭证没通过";
+                return;
+            }
+
             _adminUnlocked = true;
-            _unlockKey = (info.Key ?? "").Trim();
             PanAdminLocked.Visibility = Visibility.Collapsed;
             PanAdminUnlocked.Visibility = Visibility.Visible;
             PanAdminTools.IsEnabled = true;
-            LabAdminRemain.Text = "当前凭证还有 " + info.ExpiresText + " 有效";
+            LabAdminRemain.Text = info.ExpiresIn > 0
+                ? "当前凭证还有 " + info.ExpiresText + " 就该换了（已解锁的维护模式不受影响）"
+                : "已解锁";
             TxtAdminKeyInput.Clear();
             LabAdminKeyError.Text = "";
             LabAdminAction.Text = "已解锁，可以管市场、接口和检查更新了";
             SetStatus("维护模式已开启");
-        }
-
-        private async void BtnAdminRefreshKey_Click(object sender, RoutedEventArgs e)
-        {
-            if (_adminKey == null) return;
-            LabAdminKeyError.Text = "正在连服务器…";
-            var info = await _adminKey.RefreshAsync();
-            LabAdminKeyError.Text = info.Online ? "" : "刷新失败：" + info.Error;
-            SetStatus(info.Online ? "凭据已刷新" : "凭证没刷新成功", !info.Online);
-        }
-
-        private void BtnAdminSaveAccessKey_Click(object sender, RoutedEventArgs e)
-        {
-            var key = TxtAdminAccessKey.Text.Trim();
-            _gateway?.SetAccessKey(key);
-            _adminKey?.SetAccessKey(key);
-            RefreshEndpoints();
-            SetStatus("接入密钥已保存，正在用它重连");
         }
 
         private void BtnAdminExit_Click(object sender, RoutedEventArgs e) => LockAdmin("已退出维护模式");

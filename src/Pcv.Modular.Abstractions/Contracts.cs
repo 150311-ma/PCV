@@ -183,10 +183,7 @@ namespace Pcv.Modular.Contracts
     public interface IApiGateway
     {
         string Site { get; }
-        string AccessKey { get; }
         IReadOnlyList<ApiEndpointInfo> Endpoints { get; }
-        /// <summary>接入密钥在服务设置里改；改完立即落盘并通知界面。</summary>
-        void SetAccessKey(string key);
         void SetEnabled(string id, bool enabled);
         /// <summary>从服务端拉最新接口清单；失败保留本地那份并回 false。</summary>
         Task<bool> RefreshAsync();
@@ -195,12 +192,21 @@ namespace Pcv.Modular.Contracts
         event Action<string> Changed;
     }
 
-    // ── 在线服务：轮换凭证 ──────────────────────────────────────────────
-    // 服务端每 10 分钟换一次；模块负责定时刷新，壳只负责比对与计时。
+    // ── 在线服务：凭证校验 ──────────────────────────────────────────────
+    //
+    // 重要：**客户端不持有凭证**，也不自己比对。
+    // 凭证只在博客后台（管理员会话）里显示，用户抄下来手输；
+    // 对不对由服务端判，客户端只负责把用户输入交上去、拿回 ok / 不 ok。
+    //
+    // 为什么不是本地比对：本地比对要求客户端知道正确答案 —— 而知道答案
+    // 就等于能自己解锁，「输入凭证」纯属表演。以前那版就是这么干的，
+    // 而且那个「正确答案」还是从服务端用共享密钥换来的（密钥明文写在
+    // 开源仓库里），等于谁都能拿到。
 
     public sealed class AdminKeyInfo
     {
-        public string Key { get; set; }
+        /// <summary>校验结果：true = 用户输入的凭证被服务端认可。</summary>
+        public bool Verified { get; set; }
         public int Interval { get; set; }
         public int ExpiresIn { get; set; }
         public string ServerTime { get; set; }
@@ -213,10 +219,13 @@ namespace Pcv.Modular.Contracts
 
     public interface IAdminKeyProvider
     {
+        /// <summary>最近一次校验的结果（不包含凭证本身，客户端不该有它）。</summary>
         AdminKeyInfo Current { get; set; }
-        void SetAccessKey(string key);
-        Task<AdminKeyInfo> RefreshAsync();
-        bool Validate(string input);
+
+        /// <summary>把用户输入的凭证交给服务端判；离线或服务端拒绝都回 false。</summary>
+        Task<AdminKeyInfo> VerifyAsync(string input);
+
+        /// <summary>校验结果变化时通知界面。</summary>
         event Action<AdminKeyInfo> KeyChanged;
     }
 }

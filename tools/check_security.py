@@ -156,6 +156,36 @@ def check(root: Path) -> list[str]:
         if allowed and ("\"api\"" in allowed.group(1) or "\"admin\"" in allowed.group(1)):
             errors.append("IHostControl.Navigate 的白名单里放了维护页 —— 任何模块都能绕开「藏」")
 
+    # 2.7) 客户端不许带任何共享密钥
+    #
+    # 这条是被用户当场抓出来的：以前「接入密钥」pcv-admin-2026 明文写在
+    # 开源仓库的 catalog.json 里，还内嵌进 exe —— 拿它能直接换到维护凭证，
+    # 博客管理员账号根本没参与。等于把密码贴在门上还挂块牌子说「保密」。
+    #
+    # 现在客户端不该有这个概念的任何一个字面量。只要出现就报红。
+    secrets_dir = root / "src"
+    banned = ("pcv-admin-2026", "X-PCV-Api-Key", "pcv-local-admin-secret")
+    hits = []
+    for path in secrets_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in (".cs", ".xaml"):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for needle in banned:
+            if needle in text:
+                hits.append("%s 出现在 %s" % (needle,
+                            str(path.relative_to(root)).replace("\\", "/")))
+    if hits:
+        errors.append("客户端源码里有共享密钥或它的头字段：\n      "
+                      + "\n      ".join(hits[:4]))
+
+    # 清单生成端也不能再产出 accessKey
+    catalog_tool = read(root / "tools/build_pcv_api.py")
+    if catalog_tool and '"accessKey": access' in catalog_tool:
+        errors.append("build_pcv_api.py 还在往 interfaces.json 里写 accessKey")
+
     # 3) 检出之后要弹窗 + 结束进程
     if guard:
         if "SecurityAlertWindow" not in guard:
@@ -237,6 +267,9 @@ def inject_fault() -> int:
         ("Release 又开始带符号", "Directory.Build.props",
          lambda text: text.replace("<DebugType>none</DebugType>",
                                    "<DebugType>portable</DebugType>")),
+        ("客户端被塞回明文密钥", "src/Pcv.Api/Entry.cs",
+         lambda text: text.replace("private const int TimeoutMs",
+                                   'private const string Legacy = "pcv-admin-2026";\n        private const int TimeoutMs', 1)),
         ("连点次数被改弱", "src/Pcv.Shell/MainWindow.xaml.cs",
          lambda text: text.replace("UnlockTaps = 7", "UnlockTaps = 4")),
         ("模块能直接导航到维护页", "src/Pcv.Shell/HostControl.cs",

@@ -12,7 +12,7 @@
     <Product>PAINCHARNWAV 安装程序</Product>
     <AssemblyTitle>PAINCHARNWAV 安装程序</AssemblyTitle>
     <Company>PAINCHARNWAV</Company>
-    <Version>3.1.1</Version>
+    <Version>3.2.0</Version>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
