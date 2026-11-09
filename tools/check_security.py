@@ -129,6 +129,33 @@ def check(root: Path) -> list[str]:
         if "!IsSystemPath(p)" not in guard or "!IsAppPath(p)" not in guard:
             errors.append("外部模块判定丢掉了系统目录 / 自身目录的白名单 —— 会把系统 dll 全报成入侵")
 
+    # 2.6) 维护入口必须藏得住：连点次数与时间窗、且不能被模块直接导航过去
+    #
+    # 这两条是「藏」的全部实现。改弱了不会报错、不会崩，只会**悄悄变成容易发现**：
+    # 次数少几下、时间窗放宽几秒，手滑都能撞进去。所以钉死在这里。
+    shell_cs = read(root / "src/Pcv.Shell/MainWindow.xaml.cs")
+    host_cs = read(root / "src/Pcv.Shell/HostControl.cs")
+    if shell_cs:
+        taps = re.search(r"UnlockTaps\s*=\s*(\d+)", shell_cs)
+        window = re.search(r"UnlockWindowSeconds\s*=\s*([\d.]+)", shell_cs)
+        if not taps:
+            errors.append("找不到 UnlockTaps —— 连点次数无法核对")
+        elif int(taps.group(1)) < 7:
+            errors.append("连点次数只有 %s 下，要求至少 7 下 —— 太容易误触发" % taps.group(1))
+        if not window:
+            errors.append("找不到 UnlockWindowSeconds —— 时间窗无法核对")
+        elif float(window.group(1)) > 1.0:
+            errors.append("连点时间窗放宽到 %s 秒，要求不超过 1 秒" % window.group(1))
+        # 维护页不能出现在导航 Tag 里（否则侧栏会露出一项）
+        xaml = read(root / "src/Pcv.Shell/MainWindow.xaml")
+        if 'Tag="admin"' in xaml and 'Visibility="Visible"' in xaml:
+            errors.append("维护入口出现在了可见导航里")
+    if host_cs and '"api"' in host_cs and "Navigate" in host_cs:
+        # 模块不该能把用户推到维护页
+        allowed = re.search(r'var allowed = new\[\]\s*\{([^}]*)\}', host_cs)
+        if allowed and ("\"api\"" in allowed.group(1) or "\"admin\"" in allowed.group(1)):
+            errors.append("IHostControl.Navigate 的白名单里放了维护页 —— 任何模块都能绕开「藏」")
+
     # 3) 检出之后要弹窗 + 结束进程
     if guard:
         if "SecurityAlertWindow" not in guard:
@@ -210,6 +237,10 @@ def inject_fault() -> int:
         ("Release 又开始带符号", "Directory.Build.props",
          lambda text: text.replace("<DebugType>none</DebugType>",
                                    "<DebugType>portable</DebugType>")),
+        ("连点次数被改弱", "src/Pcv.Shell/MainWindow.xaml.cs",
+         lambda text: text.replace("UnlockTaps = 7", "UnlockTaps = 4")),
+        ("模块能直接导航到维护页", "src/Pcv.Shell/HostControl.cs",
+         lambda text: text.replace('"credits", "onboarding" }', '"credits", "onboarding", "api" }')),
         ("输入法放行被摘掉（会误报注入）", "src/Pcv.Shell/SecurityGuard.cs",
          lambda text: text.replace('@"\\wetype\\",', '')
                            .replace('@"\\sogouinput\\",', '')),

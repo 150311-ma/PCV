@@ -428,7 +428,7 @@ namespace Pcv.Shell
             ViewAdd.Visibility = view == "install" ? Visibility.Visible : Visibility.Collapsed;
             ViewFrameworks.Visibility = view == "frameworks" ? Visibility.Visible : Visibility.Collapsed;
             ViewMarket.Visibility = view == "market" ? Visibility.Visible : Visibility.Collapsed;
-            ViewAdmin.Visibility = view == "admin" ? Visibility.Visible : Visibility.Collapsed;
+            ViewApi.Visibility = view == "api" ? Visibility.Visible : Visibility.Collapsed;
             ViewOnboarding.Visibility = view == "onboarding" ? Visibility.Visible : Visibility.Collapsed;
             ViewCredits.Visibility = view == "credits" ? Visibility.Visible : Visibility.Collapsed;
 
@@ -436,12 +436,44 @@ namespace Pcv.Shell
             Highlight(NavInstall, view == "install");
             Highlight(NavFrameworks, view == "frameworks");
             Highlight(NavMarket, view == "market");
-            Highlight(NavAdmin, view == "admin");
             Highlight(NavCredits, view == "credits");
+
+            // API 页不是导航项，高亮全部清掉即可 —— 它本来就不该在侧栏发光
+            if (view == "api") SetStatus("API");
 
             if (view == "frameworks") RefreshModules();
             if (view == "market") LoadMarketAsync();
-            if (view == "admin") { RefreshAdminKeyView(); RefreshEndpoints(); SyncMarketToggle(); }
+            if (view == "api") { RefreshAdminKeyView(); RefreshEndpoints(); SyncMarketToggle(); }
+        }
+
+        // ── API 页的分段切换 ────────────────────────────────────────────────
+        // 原来市场、更新、接口、外观是四张卡竖着堆，一屏看不到底。
+        // 现在按「状态 / 市场 / 接口 / 更新」分四段，顶上切换，下面只显示一段。
+        // 分段只是为了不再拉长页面，权限没变：没解锁时整块 PanAdminTools 都是禁用的。
+
+        private void Seg_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.Tag is string segment)
+                ShowApiSegment(segment);
+        }
+
+        private void ShowApiSegment(string segment)
+        {
+            SegOverview.Visibility = segment == "overview" ? Visibility.Visible : Visibility.Collapsed;
+            SegMarket.Visibility = segment == "market" ? Visibility.Visible : Visibility.Collapsed;
+            SegEndpoints.Visibility = segment == "endpoints" ? Visibility.Visible : Visibility.Collapsed;
+            SegUpdate.Visibility = segment == "update" ? Visibility.Visible : Visibility.Collapsed;
+
+            SetSegmentButton(BtnSegOverview, segment == "overview");
+            SetSegmentButton(BtnSegMarket, segment == "market");
+            SetSegmentButton(BtnSegEndpoints, segment == "endpoints");
+            SetSegmentButton(BtnSegUpdate, segment == "update");
+        }
+
+        private void SetSegmentButton(System.Windows.Controls.Button button, bool active)
+        {
+            if (button == null) return;
+            button.Style = (Style)FindResource(active ? "PrimaryButton" : "GhostButton");
         }
 
         // ── 市场 ────────────────────────────────────────────────────────────
@@ -1326,8 +1358,15 @@ namespace Pcv.Shell
         }
 
         // ── 维护入口：不在导航里，也没有任何提示 ──────────────────────────────
-        // 版本号连点 5 次（两次间隔不超过 1.5 秒）才进得去。普通用户不会去连点
-        // 一个版本号，界面上也不会出现任何维护入口的字样。
+        // 版本号 1 秒内连点 7 下才进得去。普通用户不会去连点一个版本号，
+        // 界面上也不会出现任何维护入口的字样。
+        //
+        // 为什么是「1 秒 7 下」而不是「1.5 秒 5 下」：时间窗收紧、次数抬高之后，
+        // 手滑连点两下、或者无聊戳几下，都远远够不着；而真要进去的人
+        // 一秒点七下并不难。这个组合是靠「门槛高度」藏，不是靠「猜不到」藏。
+        private const int UnlockTaps = 7;
+        private const double UnlockWindowSeconds = 1.0;
+
         private int _versionTaps;
         private DateTime _lastVersionTap = DateTime.MinValue;
 
@@ -1335,11 +1374,21 @@ namespace Pcv.Shell
         {
             e.Handled = true;   // 别把这一下当成拖标题栏
             var now = DateTime.Now;
-            _versionTaps = (now - _lastVersionTap).TotalSeconds <= 1.5 ? _versionTaps + 1 : 1;
+            _versionTaps = (now - _lastVersionTap).TotalSeconds <= UnlockWindowSeconds ? _versionTaps + 1 : 1;
             _lastVersionTap = now;
-            if (_versionTaps < 5) return;
+            if (_versionTaps < UnlockTaps) return;
             _versionTaps = 0;
-            ShowView("admin");
+            ShowView("api");
+        }
+
+        /// <summary>离屏渲染 / 自检用：直接进 API 页，不用模拟连点。</summary>
+        public void ShowApiViewForRender() => ShowView("api");
+
+        /// <summary>离屏渲染用：直接切到某一段。</summary>
+        public void ShowApiSegmentForRender(string segment)
+        {
+            ShowView("api");
+            ShowApiSegment(string.IsNullOrWhiteSpace(segment) ? "overview" : segment);
         }
 
         private void BtnThemeLight_Click(object sender, RoutedEventArgs e)
