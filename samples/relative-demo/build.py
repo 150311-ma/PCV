@@ -6,7 +6,7 @@ CONTRACT = sys.argv[2] if len(sys.argv) > 2 else ""
 
 MODULE_ID = "pcv.rel.demo"
 NAME = "相对路径示例"
-VERSION = "3.1.1"
+VERSION = "3.2.0"
 ASM = "Pcv.RelDemo"
 ROOT_NS = "Pcv.RelDemo"
 DEPS = ["pcv.core"]

@@ -184,7 +184,7 @@ namespace Pcv.Shell
                 LogFile = Path.Combine(baseDirectory, "logs", "modules.log"),
                 EchoToConsole = false,
                 HostName = "PAINCHARNWAV",
-                HostVersion = "3.1.1"
+                HostVersion = "3.2.0"
             });
 
             // 受控宿主能力必须在模块 OnLoad 之前注册，否则框架在启动期拿不到。

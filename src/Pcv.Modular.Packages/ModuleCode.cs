@@ -31,7 +31,7 @@ namespace Pcv.Modular.Packages
 
         /// <summary>按「id + 版本 + 包 sha256」算模块数字。</summary>
         /// <param name="moduleId">模块清单里的 id，例如 pcv.stat</param>
-        /// <param name="version">模块清单里的 version，例如 3.1.1</param>
+        /// <param name="version">模块清单里的 version，例如 3.2.0</param>
         /// <param name="packageSha256">整包内容的 sha256（小写十六进制）</param>
         public static string Compute(string moduleId, string version, string packageSha256)
         {

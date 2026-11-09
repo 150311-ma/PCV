@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "version": "3.1.1",
-  "updated": "2026-11-08",
+  "version": "3.2.0",
+  "updated": "2026-11-09",
   "releaseUrl": "https://github.com/150311-ma/PCV/releases/latest",
   "githubApi": "https://api.github.com/repos/150311-ma/PCV/releases/latest",
   "note": "客户端会同时问服务端和 GitHub，取两者里更新的那个版本。"

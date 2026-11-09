@@ -382,7 +382,7 @@
                         <!-- 版本号只是版本号。维护入口不挂在导航上，也不给任何提示。 -->
                         <Border Background="{DynamicResource TrmHairline}" CornerRadius="{DynamicResource TrmRadiusSmall}" Padding="6,2" Margin="8,0,0,0"
                                 VerticalAlignment="Center" MouseLeftButtonDown="VersionBadge_MouseLeftButtonDown">
-                            <TextBlock x:Name="LabVersion" Text="3.1.1" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
+                            <TextBlock x:Name="LabVersion" Text="3.2.0" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmInkMuted}" />
                         </Border>
                     </StackPanel>
 
@@ -869,45 +869,24 @@
                             <Border x:Name="PanAdminLocked" Style="{StaticResource Card}" Padding="20,18"
                                     Margin="0,0,0,12">
                                 <StackPanel>
-                                    <TextBlock Text="① 用当前凭据解锁" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                    <TextBlock Text="用凭证解锁" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TrmInk}" />
-                                    <TextBlock Text="凭证由服务器按时间片签发，每 10 分钟轮换；本地不算、也不保存。断网时不能新解锁。"
+                                    <TextBlock Text="凭证只在博客后台显示：登录管理员账号 → PCV 服务 → 当前凭证。桌面端不保存它，只在你点解锁时交给服务器判一次，所以必须联网。"
                                                FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
-                                               Margin="0,6,0,0" />
+                                               LineHeight="18" Margin="0,6,0,0" />
                                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                        <TextBlock x:Name="LabAdminKey" Text="—— —— ——" FontSize="24"
-                                                   FontWeight="SemiBold" Foreground="{DynamicResource TrmAccent}" />
-                                        <TextBlock x:Name="LabAdminKeyExpire" Text="正在连接服务器…"
-                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" Margin="14,0,0,0"
-                                                   VerticalAlignment="Bottom" />
-                                    </StackPanel>
-                                    <TextBlock x:Name="LabAdminKeyError" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmDanger}"
-                                               TextWrapping="Wrap" Margin="0,6,0,0" />
-                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                        <TextBox x:Name="TxtAdminKeyInput" Width="160" Height="34"
-                                                 FontSize="{DynamicResource TrmTextBody}" VerticalContentAlignment="Center"
-                                                 Padding="10,0" ToolTip="输入服务器当前凭据" />
+                                        <PasswordBox x:Name="TxtAdminKeyInput" Width="160" Height="34" MaxLength="16"
+                                                     FontSize="{DynamicResource TrmTextBody}" VerticalContentAlignment="Center"
+                                                     Padding="10,0" ToolTip="博客后台显示的 6 位数字" />
                                         <Button Content="解锁" Width="88" Margin="10,0,0,0"
                                                 Style="{StaticResource PrimaryButton}"
                                                 Click="BtnAdminUnlock_Click" />
-                                        <Button Content="刷新凭证" Width="96" Margin="8,0,0,0"
-                                                Style="{StaticResource GhostButton}"
-                                                Click="BtnAdminRefreshKey_Click" />
                                     </StackPanel>
-
-                                    <Border Height="1" Background="{DynamicResource TrmHairline}" Margin="0,20,0,16" />
-                                    <TextBlock Text="② 接入密钥（API Key）" FontSize="{DynamicResource TrmTextControl}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TrmInk}" />
-                                    <TextBlock Text="调用受保护的接口时要带它。默认值来自服务端接口清单，改过服务端配置后在这里同步一下。"
-                                               FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
-                                               Margin="0,6,0,0" />
-                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                        <TextBox x:Name="TxtAdminAccessKey" Width="240" Height="32"
-                                                 FontSize="{DynamicResource TrmTextHelp}" VerticalContentAlignment="Center" Padding="9,0" />
-                                        <Button Content="保存并重连" Width="112" Margin="10,0,0,0"
-                                                Style="{StaticResource GhostButton}"
-                                                Click="BtnAdminSaveAccessKey_Click" />
-                                    </StackPanel>
+                                    <TextBlock x:Name="LabAdminKeyExpire" FontSize="{DynamicResource TrmTextMeta}"
+                                               Foreground="{DynamicResource TrmHelp}" Margin="0,10,0,0" TextWrapping="Wrap"
+                                               Text="凭证在博客后台「PCV 服务」里，6 位数字" />
+                                    <TextBlock x:Name="LabAdminKeyError" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmDanger}"
+                                               TextWrapping="Wrap" Margin="0,6,0,0" />
                                 </StackPanel>
                             </Border>
 

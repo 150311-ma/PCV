@@ -88,9 +88,13 @@ def build(root):
         if not isinstance(ep.get("needsKey"), bool):
             problems.append(f"{eid}: needsKey 要是 true / false")
 
-    access = str(catalog.get("accessKey") or "")
-    if not access or any(ch.isspace() for ch in access):
-        problems.append("accessKey 不能为空，也不能带空白")
+    # accessKey 已经从清单里彻底移除。
+    #
+    # 原因：那个串是「用共享密钥换维护凭证」的一半，而它必须分发给客户端
+    # 才用得上 —— 进客户端就等于公开（以前它明文写在这里，还被嵌进了 exe）。
+    # 换成任何值都只是把秘密换个地方贴，所以直接不要这个概念了。
+    if "accessKey" in catalog:
+        problems.append("catalog.json 里不该再有 accessKey —— 凭证只能从管理员会话拿")
     site = str(catalog.get("site") or "")
     if not site.startswith("https://") or site.rstrip("/").count("/") != 2:
         problems.append("site 要写成 https://域名，不带路径")
@@ -111,7 +115,6 @@ def build(root):
         "schema": catalog.get("schema", 1),
         "updated": today,
         "site": site,
-        "accessKey": access,
         "endpoints": endpoints,
     }
     latest = {
@@ -187,15 +190,17 @@ def inject_fault():
         return json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8")
 
     def bad_key(data):
+        # 现在该报的是「不该有这个字段」——往里塞一个要能被抓住，
+        # 否则「凭证只能从管理员会话拿」这条就没人守着。
         obj = json.loads(data.decode("utf-8"))
-        obj["accessKey"] = ""
+        obj["accessKey"] = "pcv-someone-put-it-back"
         return json.dumps(obj, ensure_ascii=False, indent=2).encode("utf-8")
 
     def bad_version(data):
         installer = probe / "installer/PCV.Setup/Installer.cs"
         backup = installer.read_bytes()
         try:
-            installer.write_bytes(backup.replace(b'"3.1.1"', b'"0.0.1"'))
+            installer.write_bytes(backup.replace(b'"3.2.0"', b'"0.0.1"'))
             payloads, problems = build(probe)
             issues = verify(probe, payloads, problems)
             # 版本号变了，产物必须跟着变；如果校验器没发现产物过期就是漏检
@@ -206,7 +211,7 @@ def inject_fault():
             installer.write_bytes(backup)
 
     scene("接口拼成外部 URL 会报红", bad_path, "path")
-    scene("接入密钥被清空会报红", bad_key, "accessKey")
+    scene("清单里被塞回 accessKey 会报红", bad_key, "accessKey")
     bad_version(None)
     shutil.rmtree(probe.parent, ignore_errors=True)
 

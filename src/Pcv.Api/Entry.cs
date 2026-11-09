@@ -59,7 +59,6 @@ namespace Pcv.Api
         private readonly HashSet<string> _disabled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<ApiEndpointInfo> _endpoints = new List<ApiEndpointInfo>();
         private string _site = "https://cyan-blog-2fk.pages.dev";
-        private string _accessKey = "";
         private string _lastError = "";
 
         public ApiGateway(IModuleContext context)
@@ -71,7 +70,6 @@ namespace Pcv.Api
         }
 
         public string Site => _site;
-        public string AccessKey => _accessKey;
         public string LastError => _lastError;
         public IReadOnlyList<ApiEndpointInfo> Endpoints => _endpoints.AsReadOnly();
 
@@ -86,12 +84,21 @@ namespace Pcv.Api
             try
             {
                 if (File.Exists(_configFile))
-                    Apply(File.ReadAllText(_configFile, Encoding.UTF8));
+                {
+                    var cached = File.ReadAllText(_configFile, Encoding.UTF8);
+                    // 老版本缓存里带 accessKey —— 那是已经作废的共享密钥。
+                    // 光忽略不够：文件还躺在用户机器上，谁都能打开看到。
+                    // 发现这种旧格式就直接删掉，让它下次重新拉干净的那份。
+                    if (cached.IndexOf("\"accessKey\"", StringComparison.Ordinal) >= 0)
+                    {
+                        try { File.Delete(_configFile); } catch { }
+                        cached = null;
+                    }
+                    if (!string.IsNullOrWhiteSpace(cached)) Apply(cached);
+                }
             }
             catch { /* 本地副本坏了就用内嵌那份 */ }
 
-            var configured = _settings?.GetValue("ApiAccessKey", "");
-            if (!string.IsNullOrWhiteSpace(configured)) _accessKey = configured.Trim();
             var ids = _settings?.GetValue("ApiDisabledIds", "") ?? "";
             foreach (var id in ids.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 _disabled.Add(id.Trim());
@@ -112,7 +119,6 @@ namespace Pcv.Api
         private sealed class InterfacesDocument
         {
             public string Site { get; set; }
-            public string AccessKey { get; set; }
             public List<ApiEndpointInfo> Endpoints { get; set; }
         }
 
@@ -130,9 +136,6 @@ namespace Pcv.Api
             var doc = JsonConvert.DeserializeObject<InterfacesDocument>(json);
             if (doc == null || doc.Endpoints == null || doc.Endpoints.Count == 0) return;
             if (!string.IsNullOrWhiteSpace(doc.Site) && doc.Site.StartsWith("https://")) _site = doc.Site.TrimEnd('/');
-            // 用户手改过的接入密钥优先，别被服务端默认值盖掉
-            if (string.IsNullOrWhiteSpace(_accessKey) && !string.IsNullOrWhiteSpace(doc.AccessKey))
-                _accessKey = doc.AccessKey.Trim();
 
             _endpoints.Clear();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -155,14 +158,6 @@ namespace Pcv.Api
                 File.WriteAllText(_configFile, json, new UTF8Encoding(false));
             }
             catch { /* 写不上不影响这次使用，下次再拉 */ }
-        }
-
-        public void SetAccessKey(string key)
-        {
-            _accessKey = (key ?? "").Trim();
-            _settings?.SetValue("ApiAccessKey", _accessKey);
-            _settings?.Save();
-            Changed?.Invoke("key");
         }
 
         public void SetEnabled(string id, bool enabled)
@@ -216,8 +211,9 @@ namespace Pcv.Api
             {
                 return await Task.Run(() =>
                 {
-                    var key = ep.NeedsKey ? _accessKey : null;
-                    var (status, text) = HttpWithStatus(_site + ep.Path, ep.Method, key, body);
+                    // 客户端不再持有任何密钥：需要鉴权的接口由服务端按别的口径判
+                    // （比如凭证校验走 /pcv-api/verify）。这里一律不带密钥。
+                    var (status, text) = HttpWithStatus(_site + ep.Path, ep.Method, body);
                     return new ApiCallResult
                     {
                         Ok = status >= 200 && status < 300,
@@ -235,14 +231,14 @@ namespace Pcv.Api
 
         // ── HTTP（只用 BCL；CF 那段会偶发截断，重试到能解析为止）────────
 
-        private static (int, string) HttpWithStatus(string url, string method, string key, string body)
+        private static (int, string) HttpWithStatus(string url, string method, string body)
         {
             Exception last = null;
             for (var attempt = 1; attempt <= MaxAttempts; attempt++)
             {
                 try
                 {
-                    var request = Make(url + (url.Contains("?") ? "&" : "?") + "n=" + attempt, method, key);
+                    var request = Make(url + (url.Contains("?") ? "&" : "?") + "n=" + attempt, method);
                     if (method == "POST" && body != null)
                     {
                         var bytes = Encoding.UTF8.GetBytes(body);
@@ -268,23 +264,24 @@ namespace Pcv.Api
 
         private static string Http(string url, string method, string key, string body)
         {
-            var (status, text) = HttpWithStatus(url, method, key, body);
+            var (status, text) = HttpWithStatus(url, method, body);
             if (status < 200 || status >= 300) throw new InvalidDataException("HTTP " + status);
             // 截断的 JSON 解析不了就当失败，让上层重试
             JsonConvert.DeserializeObject<InterfacesDocument>(text);
             return text;
         }
 
-        private static HttpWebRequest Make(string url, string method, string key)
+        private static HttpWebRequest Make(string url, string method)
         {
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Timeout = TimeoutMs;
             request.ReadWriteTimeout = TimeoutMs;
-            request.UserAgent = "PCV-Api/1";
+            request.UserAgent = "PCV-Api/2";
             request.Headers[HttpRequestHeader.CacheControl] = "no-cache";
-            if (!string.IsNullOrEmpty(key)) request.Headers["X-PCV-Api-Key"] = key;
+            // 不再带任何密钥头：客户端不持有密钥。
+            // 需要鉴权的接口由服务端按别的口径判（凭证校验走 /pcv-api/verify）。
             return request;
         }
 

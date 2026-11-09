@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,20 +13,27 @@ using Pcv.Modular.Contracts;
 namespace Pcv.AdminKey
 {
     /// <summary>
-    /// 在线凭据模块：每 10 分钟向服务端要一次当前凭证。
+    /// 凭证校验模块：把用户在桌面端输入的 6 位数交给服务端判，客户端不持有答案。
     ///
-    /// 密钥由服务端按时间片算出来（HMAC），模块不自己生成、也不落盘，
-    /// 所以「本地改代码伪造一个密钥」是行不通的。断网时保留上一次的
-    /// 结果但标记 offline，壳会拒绝用离线密钥新开管理员模式。
+    /// 为什么是「送校验」而不是「取凭证」：
+    ///   以前这个模块是向服务端要当前凭证，再在本地拿用户输入去比对。
+    ///   那有两处硬伤 ——
+    ///     1. 要凭证就得先有「接入密钥」，而那个密钥必须分发给客户端才用得上，
+    ///        一进客户端就等于公开（它以前明文写在开源仓库里，还内嵌进了 exe）；
+    ///     2. 本地比对意味着客户端知道正确答案，「输入凭证」只是表演。
     ///
-    /// 定时器每 30 秒走一次：只是把倒计时减掉，到点了才真的发请求，
-    /// 不会十分钟里一直打扰服务器。
+    ///   现在改成：凭证只在博客后台（管理员会话）显示，用户抄下来手输，
+    ///   客户端把它 POST 到 /pcv-api/verify，服务端判对错。
+    ///   客户端一行秘密都不留，断网就解不开 —— 这是有意的代价。
+    ///
+    /// 服务端对这个接口有失败限流（同 IP 连错 8 次锁 10 分钟），
+    /// 因为 6 位数字只有 100 万种，不限流是能被枚举的。
     /// </summary>
     public sealed class Entry : IPclModule, IFrameworkSurface
     {
         private AdminKeyProvider _provider;
 
-        public string Title => "在线凭据";
+        public string Title => "凭证校验";
 
         public void OnLoad(IModuleContext context)
         {
@@ -35,32 +41,29 @@ namespace Pcv.AdminKey
             context.Services.Register<IAdminKeyProvider>(_provider);
         }
 
-        public void OnStart() => _provider?.Start();
+        public void OnStart() { /* 不再定时拉取：只在用户提交时校验 */ }
 
-        public void OnStop() => _provider?.Stop();
+        public void OnStop() { }
 
         public object CreateView(IModuleContext context)
-            => _provider?.CreateView() ?? new TextBlock { Text = "密钥模块没起来" };
+            => _provider?.CreateView() ?? new TextBlock { Text = "凭证模块没起来" };
     }
 
     public sealed class AdminKeyProvider : IAdminKeyProvider
     {
         private const int TimeoutMs = 10000;
-        private const int MaxAttempts = 3;
-        private const int TickSeconds = 30;
+        private const int MaxAttempts = 2;
 
         private readonly IModuleContext _context;
         private readonly ILogger _log;
-        private Timer _timer;
         private string _site = "https://cyan-blog-2fk.pages.dev";
-        private string _accessKey = "";
-        private AdminKeyInfo _current = new AdminKeyInfo { Error = "还没连上服务器" };
-        private int _refreshing;
+        private AdminKeyInfo _current = new AdminKeyInfo { Error = "还没校验过" };
 
         public AdminKeyProvider(IModuleContext context)
         {
             _context = context;
             _log = context.Log;
+            TryBindSite();
         }
 
         public AdminKeyInfo Current
@@ -71,97 +74,109 @@ namespace Pcv.AdminKey
 
         public event Action<AdminKeyInfo> KeyChanged;
 
-        public void SetAccessKey(string key)
+        private void TryBindSite()
         {
-            _accessKey = (key ?? "").Trim();
-            // 换凭证立刻重连一次，别等下个十分钟
-            Task.Run(async () => { try { await RefreshAsync(); } catch { } });
-        }
-
-        public void Start()
-        {
-            TryBindGateway();
-            _timer = new Timer(_ => Tick(), null, TimeSpan.Zero, TimeSpan.FromSeconds(TickSeconds));
-        }
-
-        public void Stop()
-        {
-            _timer?.Dispose();
-            _timer = null;
-        }
-
-        private void TryBindGateway()
-        {
-            // OnStart 时所有模块的 OnLoad 都完成了，这会儿才敢去问网关要站点和密钥。
-            // 站点与接入密钥的真相源是 IApiGateway，这里不另存一份常量，
-            // 服务设置里改了接入密钥，事件一到就跟着变。
-            _context.Services.TryGet(out IApiGateway gateway);
-            if (gateway == null) return;
-            _site = gateway.Site;
-            _accessKey = gateway.AccessKey;
-            gateway.Changed += _ =>
+            // 站点地址从网关取，别在模块里另存一份常量
+            if (_context.Services.TryGet(out IApiGateway gateway)
+                && gateway != null && !string.IsNullOrWhiteSpace(gateway.Site))
             {
-                _site = gateway.Site;
-                _accessKey = gateway.AccessKey;
-            };
-        }
-
-        private void Tick()
-        {
-            var info = _current;
-            if (info == null || !info.Online || info.ExpiresIn <= TickSeconds)
-            {
-                Task.Run(async () => { try { await RefreshAsync(); } catch { } });
-                return;
+                _site = gateway.Site.TrimEnd('/');
             }
-            info.ExpiresIn = Math.Max(0, info.ExpiresIn - TickSeconds);
-            KeyChanged?.Invoke(info);
         }
 
-        public bool Validate(string input)
+        /// <summary>
+        /// 把用户输入的凭证交给服务端判。
+        /// 返回的 AdminKeyInfo 只带「通过没有 / 还有多久换」，**不含凭证本身**。
+        /// </summary>
+        public async Task<AdminKeyInfo> VerifyAsync(string input)
         {
-            var info = _current;
-            if (info == null || !info.Online || string.IsNullOrWhiteSpace(info.Key)) return false;
-            return string.Equals((input ?? "").Trim(), info.Key.Trim(), StringComparison.Ordinal);
-        }
+            TryBindSite();
 
-        public async Task<AdminKeyInfo> RefreshAsync()
-        {
-            if (Interlocked.Exchange(ref _refreshing, 1) == 1)
-                return _current;
+            var digits = OnlyDigits(input);
+            if (digits.Length != 6)
+            {
+                var bad = new AdminKeyInfo
+                {
+                    Verified = false, Online = true,
+                    Error = "凭证是 6 位数字，请核对网页后台显示的那一串",
+                };
+                Current = bad;
+                return bad;
+            }
+
             try
             {
-                var json = await Task.Run(() => Http(_site + "/pcv-api/admin-key", "GET", _accessKey, null))
-                                     .ConfigureAwait(false);
-                var info = JsonConvert.DeserializeObject<AdminKeyInfo>(json);
-                if (info == null || string.IsNullOrWhiteSpace(info.Key))
-                    throw new InvalidDataException("服务端没给凭证（正文可能被截断）");
-                info.Online = true;
-                info.Error = "";
-                if (info.Interval <= 0) info.Interval = 600;
-                Current = info;
-                return info;
+                var payload = JsonConvert.SerializeObject(new { credential = digits });
+                var (status, text) = await Task.Run(() => Http(_site + "/pcv-api/verify", "POST", payload))
+                                              .ConfigureAwait(false);
+
+                var doc = JsonConvert.DeserializeObject<VerifyResponse>(text);
+
+                if (status == 429)
+                {
+                    var limited = new AdminKeyInfo
+                    {
+                        Verified = false, Online = true,
+                        Error = doc != null && !string.IsNullOrWhiteSpace(doc.Error)
+                            ? doc.Error : "试错太多，等一会儿再试",
+                    };
+                    Current = limited;
+                    return limited;
+                }
+
+                if (doc == null || !doc.Ok)
+                {
+                    var denied = new AdminKeyInfo
+                    {
+                        Verified = false, Online = true,
+                        Error = doc != null && !string.IsNullOrWhiteSpace(doc.Error)
+                            ? doc.Error : "凭证不对",
+                    };
+                    Current = denied;
+                    return denied;
+                }
+
+                var ok = new AdminKeyInfo
+                {
+                    Verified = true,
+                    Online = true,
+                    Interval = doc.Interval > 0 ? doc.Interval : 600,
+                    ExpiresIn = doc.ExpiresIn,
+                    ServerTime = doc.ServerTime,
+                    Error = "",
+                };
+                Current = ok;
+                _log?.Info("维护模式凭证校验通过");
+                return ok;
             }
             catch (Exception ex)
             {
                 var failed = new AdminKeyInfo
                 {
-                    Key = "", Online = false, Interval = 600, ExpiresIn = 0,
-                    Error = Short(ex.Message)
+                    Verified = false, Online = false,
+                    Error = "连不上服务器：" + Short(ex.Message),
                 };
                 Current = failed;
-                _log?.Warn("凭证刷新失败：" + failed.Error);
+                _log?.Warn("凭证校验失败：" + failed.Error);
                 return failed;
             }
-            finally
+        }
+
+        private static string OnlyDigits(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "";
+            var builder = new StringBuilder(6);
+            foreach (var ch in text)
             {
-                Interlocked.Exchange(ref _refreshing, 0);
+                if (ch >= '0' && ch <= '9') builder.Append(ch);
+                if (builder.Length == 6) break;
             }
+            return builder.ToString();
         }
 
         // ── HTTP ───────────────────────────────────────────────────────────
 
-        private static string Http(string url, string method, string key, string body)
+        private static (int Status, string Body) Http(string url, string method, string body)
         {
             Exception last = null;
             for (var attempt = 1; attempt <= MaxAttempts; attempt++)
@@ -174,23 +189,44 @@ namespace Pcv.AdminKey
                     request.Method = method;
                     request.Timeout = TimeoutMs;
                     request.ReadWriteTimeout = TimeoutMs;
-                    request.UserAgent = "PCV-AdminKey/1";
-                    request.Headers["X-PCV-Api-Key"] = key ?? "";
+                    request.UserAgent = "PCV-AdminKey/2";
+                    request.ContentType = "application/json";
+                    request.Accept = "application/json";
                     request.Headers[HttpRequestHeader.CacheControl] = "no-cache";
+
+                    if (!string.IsNullOrEmpty(body))
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(body);
+                        request.ContentLength = bytes.Length;
+                        using (var stream = request.GetRequestStream())
+                            stream.Write(bytes, 0, bytes.Length);
+                    }
+
                     using (var response = (HttpWebResponse)request.GetResponse())
                     using (var stream = response.GetResponseStream())
                     using (var reader = new StreamReader(stream, Encoding.UTF8))
-                    {
-                        var text = reader.ReadToEnd();
-                        // 截断的 JSON 解析不了就重试，不把半截响应当成功
-                        var probe = JsonConvert.DeserializeObject<AdminKeyInfo>(text);
-                        if (probe == null) throw new InvalidDataException("响应不完整");
-                        return text;
-                    }
+                        return ((int)response.StatusCode, reader.ReadToEnd());
+                }
+                catch (WebException ex) when (ex.Response is HttpWebResponse error)
+                {
+                    // 401 / 429 是「有意义的回答」，不是网络故障 —— 直接读正文返回
+                    var response = error;
+                    using (var stream = response.GetResponseStream())
+                    using (var reader = new StreamReader(stream, Encoding.UTF8))
+                        return ((int)response.StatusCode, reader.ReadToEnd());
                 }
                 catch (Exception ex) { last = ex; }
             }
             throw last ?? new InvalidOperationException("请求失败");
+        }
+
+        private sealed class VerifyResponse
+        {
+            [JsonProperty("ok")] public bool Ok { get; set; }
+            [JsonProperty("error")] public string Error { get; set; }
+            [JsonProperty("interval")] public int Interval { get; set; }
+            [JsonProperty("expiresIn")] public int ExpiresIn { get; set; }
+            [JsonProperty("serverTime")] public string ServerTime { get; set; }
         }
 
         private static string Short(string text)
@@ -207,42 +243,46 @@ namespace Pcv.AdminKey
             var root = new StackPanel { Margin = new Thickness(4) };
             root.Children.Add(new TextBlock
             {
-                Text = "在线凭据", FontSize = 16, FontWeight = FontWeights.SemiBold,
+                Text = "凭证校验", FontSize = 16, FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x13, 0x1A, 0x24))
             });
             root.Children.Add(new TextBlock
             {
-                Text = "每 10 分钟轮换一次。当前凭证由服务设置页显示，本地不生成、不保存。",
+                Text = "凭证只在博客后台显示（需要管理员账号）。桌面端不保存凭证，"
+                     + "只在解锁时把它交给服务端判一次；断网时无法解锁。",
                 FontSize = 11.5, TextWrapping = TextWrapping.Wrap,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x7A, 0x86, 0x99)),
                 Margin = new Thickness(0, 6, 0, 16)
             });
-            var keyText = new TextBlock
+
+            var input = new PasswordBox { Height = 34, MaxLength = 16, Padding = new Thickness(9, 0, 9, 0) };
+            var button = new Button
             {
-                FontSize = 30, FontWeight = FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x13, 0x70, 0xF3))
+                Content = "校验", Height = 34, Width = 92,
+                Margin = new Thickness(10, 0, 0, 0),
             };
             var state = new TextBlock
             {
-                FontSize = 11.5, Margin = new Thickness(0, 8, 0, 0),
+                FontSize = 11.5, Margin = new Thickness(0, 12, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
                 Foreground = new SolidColorBrush(Color.FromRgb(0x7A, 0x86, 0x99))
             };
-            root.Children.Add(keyText);
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            row.Children.Add(input);
+            row.Children.Add(button);
+            root.Children.Add(row);
             root.Children.Add(state);
-            Action paint = () =>
+
+            button.Click += async (s, e) =>
             {
-                var info = _current;
-                keyText.Text = info != null && info.Online ? info.Key : "— — — — — —";
-                state.Text = info == null ? "还没连上"
-                    : info.Online ? $"在线 · {info.ExpiresText} 后更换 · 服务器时间 {info.ServerTime}"
-                    : "离线：" + info.Error;
-            };
-            paint();
-            KeyChanged += _ =>
-            {
-                var dispatcher = Application.Current?.Dispatcher;
-                if (dispatcher == null) return;
-                if (dispatcher.CheckAccess()) paint(); else dispatcher.Invoke(paint);
+                button.IsEnabled = false;
+                state.Text = "正在问服务器…";
+                var info = await VerifyAsync(input.Password).ConfigureAwait(true);
+                button.IsEnabled = true;
+                state.Text = info.Verified
+                    ? "通过 · 有效 " + info.ExpiresText
+                    : (info.Error ?? "没通过");
             };
             return root;
         }

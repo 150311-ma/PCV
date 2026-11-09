@@ -31,8 +31,8 @@
 
 ```bat
 :: 打包并安装一个示例
-python tools/pack_module.py samples/py-demo dist/pcv.py.demo-3.1.1.pclpkg
-src\Pcv.Modular.Cli\bin\Release\Pcv.Modular.Cli.exe --modules "%LOCALAPPDATA%\Programs\PAINCHARNWAV\modules" --install dist\pcv.py.demo-3.1.1.pclpkg
+python tools/pack_module.py samples/py-demo dist/pcv.py.demo-3.2.0.pclpkg
+src\Pcv.Modular.Cli\bin\Release\Pcv.Modular.Cli.exe --modules "%LOCALAPPDATA%\Programs\PAINCHARNWAV\modules" --install dist\pcv.py.demo-3.2.0.pclpkg
 
 :: 或者让宿主自己跑构建脚本（跑完自动装）
 PCV.exe --build samples/relative-demo/build.py

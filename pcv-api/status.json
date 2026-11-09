@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "updated": "2026-11-08",
+  "updated": "2026-11-09",
   "site": "https://cyan-blog-2fk.pages.dev",
   "online": true,
   "marketEnabled": true,
   "marketItems": 6,
-  "endpointCount": 7,
+  "endpointCount": 6,
   "notice": "PCV 在线服务运行中。市场清单每 60 秒可刷新；凭证每 10 分钟轮换一次。",
   "adminKeyInterval": 600
 }
