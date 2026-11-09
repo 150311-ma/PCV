@@ -195,7 +195,7 @@ def inject_fault():
         installer = probe / "installer/PCV.Setup/Installer.cs"
         backup = installer.read_bytes()
         try:
-            installer.write_bytes(backup.replace(b'"3.1.0"', b'"0.0.1"'))
+            installer.write_bytes(backup.replace(b'"3.1.1"', b'"0.0.1"'))
             payloads, problems = build(probe)
             issues = verify(probe, payloads, problems)
             # 版本号变了，产物必须跟着变；如果校验器没发现产物过期就是漏检
