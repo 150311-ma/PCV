@@ -85,7 +85,10 @@ namespace Pcv.Shell
         public bool Navigate(string view)
         {
             if (_window == null || string.IsNullOrWhiteSpace(view)) return false;
-            var allowed = new[] { "home", "install", "frameworks", "market", "credits", "onboarding", "admin" };
+            // 维护页（api）**故意不在这张白名单里**：
+            // 它是靠连点版本号进的，模块不该有办法把用户直接推过去 ——
+            // 否则任何一个第三方模块都能绕开「藏起来」这件事。
+            var allowed = new[] { "home", "install", "frameworks", "market", "credits", "onboarding" };
             if (Array.IndexOf(allowed, view) < 0) return false;
             try
             {

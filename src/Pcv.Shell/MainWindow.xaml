@@ -463,8 +463,8 @@
                         </Button>
 
                         <!-- 维护入口不进导航：普通用户不该看到它，也不该被引导去找它。
-                             这里保留一个折叠项，只为让 ShowView 的 Highlight 有对象。 -->
-                        <Button x:Name="NavAdmin" Style="{StaticResource NavButton}" Tag="admin" Click="Nav_Click"
+                             连点版本号 7 下才到得了，所以这里不需要真的按钮。 -->
+                        <Button x:Name="NavAdmin" Style="{StaticResource NavButton}" Tag="api" Click="Nav_Click"
                                 Visibility="Collapsed" IsTabStop="False" />
 
                         <Border Height="1" Background="{DynamicResource TrmHairline}" Margin="20,14,20,14" />
@@ -817,40 +817,57 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- 服务设置：入口不对外展示，只在版本号连点后到达 -->
-                    <ScrollViewer x:Name="ViewAdmin" VerticalScrollBarVisibility="Auto"
+                    <!-- API 页：市场 / 更新 / 接口 / 外观 全收在这一页里。
+                         以前这些散成一堆入口（市场页一个、设置页三个），
+                         现在按「一页四段」排：顶上分段切换，下面只显示当前那段。 -->
+                    <ScrollViewer x:Name="ViewApi" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
                         <StackPanel Margin="32,22,32,28" MaxWidth="880">
                             <StackPanel>
-                                <TextBlock Text="服务设置" Style="{StaticResource PageTitle}" />
-                                <TextBlock Text="市场开关、在线接口、自动更新都收在这里。用服务器每 10 分钟换一次的凭据进入维护模式。"
+                                <TextBlock Text="API" Style="{StaticResource PageTitle}" />
+                                <TextBlock Text="市场、在线接口、自动更新和外观都收在这一页。用服务器按时间片签发的凭据进入维护模式。"
                                            Style="{StaticResource PageSubtitle}" Margin="0,6,0,0" />
                             </StackPanel>
 
-                            <!-- 外观：TRM 的两套令牌，标题栏上也能切 -->
-                            <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,18,0,12">
-                                <Grid>
-                                    <StackPanel>
-                                        <TextBlock Text="外观" FontSize="{DynamicResource TrmTextList}"
-                                                   FontWeight="SemiBold" Foreground="{DynamicResource TrmInk}" />
-                                        <TextBlock x:Name="LabThemeState" Text="浅色"
-                                                   FontSize="{DynamicResource TrmTextMeta}"
-                                                   Foreground="{DynamicResource TrmHelp}" Margin="0,4,0,0"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                                VerticalAlignment="Center">
-                                        <Button x:Name="BtnThemeLight" Content="浅色" Width="76"
-                                                Style="{StaticResource GhostButton}" Click="BtnThemeLight_Click" />
-                                        <Button x:Name="BtnThemeDark" Content="深色" Width="76" Margin="8,0,0,0"
-                                                Style="{StaticResource GhostButton}" Click="BtnThemeDark_Click" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
+                            <!-- 分段：一次只看一段，不再把四张卡竖着堆成长条 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,18,0,14">
+                                <Button x:Name="BtnSegOverview" Content="状态" Width="82" Height="30"
+                                        Click="Seg_Click" Tag="overview">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button x:Name="BtnSegMarket" Content="市场" Width="82" Height="30" Margin="8,0,0,0"
+                                        Click="Seg_Click" Tag="market">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button x:Name="BtnSegEndpoints" Content="接口" Width="82" Height="30" Margin="8,0,0,0"
+                                        Click="Seg_Click" Tag="endpoints">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button x:Name="BtnSegUpdate" Content="更新" Width="82" Height="30" Margin="8,0,0,0"
+                                        Click="Seg_Click" Tag="update">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                            <Setter Property="FontSize" Value="{DynamicResource TrmTextMeta}" />
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
 
-                            <!-- 未解锁 -->
+                            <!-- 未解锁：只有这一段解锁后才能看后面几段的内容 -->
                             <Border x:Name="PanAdminLocked" Style="{StaticResource Card}" Padding="20,18"
-                                    Margin="0,18,0,12">
+                                    Margin="0,0,0,12">
                                 <StackPanel>
                                     <TextBlock Text="① 用当前凭据解锁" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TrmInk}" />
@@ -912,61 +929,105 @@
                             </Border>
 
                             <StackPanel x:Name="PanAdminTools" IsEnabled="False">
-                                <!-- 市场 -->
-                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,12">
-                                    <StackPanel>
-                                        <TextBlock Text="市场状态与开关" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TrmInk}" />
-                                        <TextBlock x:Name="LabAdminMarketState" Text="还没检查"
-                                                   FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
-                                                   LineHeight="19" Margin="0,8,0,0" />
-                                        <TextBlock x:Name="LabAdminServerState" FontSize="{DynamicResource TrmTextMeta}"
-                                                   Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,4,0,0" />
-                                        <TextBlock x:Name="LabAdminNotice" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmAccent}"
-                                                   TextWrapping="Wrap" Margin="0,4,0,0" />
-                                        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                            <Button x:Name="BtnAdminToggleMarket" Content="关闭市场" Width="106"
-                                                    Style="{StaticResource PrimaryButton}"
-                                                    Click="BtnAdminToggleMarket_Click" />
-                                            <Button Content="检查服务状态" Width="112" Margin="8,0,0,0"
-                                                    Style="{StaticResource GhostButton}"
-                                                    Click="BtnAdminCheck_Click" />
-                                            <Button Content="强制刷新清单" Width="112" Margin="8,0,0,0"
-                                                    Style="{StaticResource GhostButton}"
-                                                    Click="BtnAdminRefreshMarket_Click" />
-                                            <Button Content="清本地缓存" Width="104" Margin="8,0,0,0"
-                                                    Style="{StaticResource GhostButton}"
-                                                    Click="BtnAdminClearCache_Click" />
-                                        </StackPanel>
-                                        <TextBlock x:Name="LabAdminAction" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
-                                                   TextWrapping="Wrap" Margin="0,10,0,0" />
-                                    </StackPanel>
-                                </Border>
 
-                                <!-- 自动更新 -->
-                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,12">
-                                    <StackPanel>
-                                        <TextBlock Text="自动更新" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TrmInk}" />
-                                        <TextBlock Text="同时问博客服务端和 GitHub，取两者里更新的版本；只提示，不偷偷下载。"
-                                                   FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
-                                                   Margin="0,6,0,0" />
-                                        <TextBlock x:Name="LabAdminUpdate" Text="还没检查"
-                                                   FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
-                                                   LineHeight="19" Margin="0,10,0,0" />
-                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                            <Button Content="检查更新" Width="100"
-                                                    Style="{StaticResource GhostButton}"
-                                                    Click="BtnAdminCheckUpdate_Click" />
-                                            <Button Content="去 GitHub 下载 →" Width="148" Margin="8,0,0,0"
-                                                    Style="{StaticResource PrimaryButton}"
-                                                    Click="BtnAdminGoGitHub_Click" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                                <!-- 段 1：状态（外观 + 市场状态一起看） -->
+                                <StackPanel x:Name="SegOverview">
+                                    <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,0,0,12">
+                                        <Grid>
+                                            <StackPanel>
+                                                <TextBlock Text="外观" FontSize="{DynamicResource TrmTextList}"
+                                                           FontWeight="SemiBold" Foreground="{DynamicResource TrmInk}" />
+                                                <TextBlock x:Name="LabThemeState" Text="浅色"
+                                                           FontSize="{DynamicResource TrmTextMeta}"
+                                                           Foreground="{DynamicResource TrmHelp}" Margin="0,4,0,0"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center">
+                                                <Button x:Name="BtnThemeLight" Content="浅色" Width="76"
+                                                        Style="{StaticResource GhostButton}" Click="BtnThemeLight_Click" />
+                                                <Button x:Name="BtnThemeDark" Content="深色" Width="76" Margin="8,0,0,0"
+                                                        Style="{StaticResource GhostButton}" Click="BtnThemeDark_Click" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
 
-                                <!-- API 接口管理 -->
-                                <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
+                                    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="一句话看当前状态" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TrmInk}" />
+                                            <TextBlock x:Name="LabAdminMarketState" Text="还没检查"
+                                                       FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
+                                                       LineHeight="19" Margin="0,8,0,0" />
+                                            <TextBlock x:Name="LabAdminServerState" FontSize="{DynamicResource TrmTextMeta}"
+                                                       Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                            <TextBlock x:Name="LabAdminNotice" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmAccent}"
+                                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                                            <TextBlock x:Name="LabAdminUpdate" Text="还没检查更新"
+                                                       FontSize="{DynamicResource TrmTextHelp}" Foreground="{DynamicResource TrmInkMuted}" TextWrapping="Wrap"
+                                                       LineHeight="19" Margin="0,10,0,0" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                                <Button Content="检查服务状态" Width="112"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Click="BtnAdminCheck_Click" />
+                                                <Button Content="检查更新" Width="100" Margin="8,0,0,0"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Click="BtnAdminCheckUpdate_Click" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- 段 2：市场 -->
+                                <StackPanel x:Name="SegMarket" Visibility="Collapsed">
+                                    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="市场开关" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TrmInk}" />
+                                            <TextBlock Text="这是本机设置：关掉之后，这台机器一次线上请求都不发。它和网页后台的总开关是两件事。"
+                                                       FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                                       LineHeight="18" Margin="0,6,0,0" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                                <Button x:Name="BtnAdminToggleMarket" Content="关闭市场" Width="106"
+                                                        Style="{StaticResource PrimaryButton}"
+                                                        Click="BtnAdminToggleMarket_Click" />
+                                                <Button Content="强制刷新清单" Width="112" Margin="8,0,0,0"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Click="BtnAdminRefreshMarket_Click" />
+                                                <Button Content="清本地缓存" Width="104" Margin="8,0,0,0"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Click="BtnAdminClearCache_Click" />
+                                            </StackPanel>
+                                            <TextBlock x:Name="LabAdminAction" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
+                                                       TextWrapping="Wrap" Margin="0,10,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- 段 4：更新 -->
+                                <StackPanel x:Name="SegUpdate" Visibility="Collapsed">
+                                    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="自动更新" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TrmInk}" />
+                                            <TextBlock Text="同时问博客服务端和 GitHub，取两者里更新的版本；只提示，不偷偷下载。"
+                                                       FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmHelp}" TextWrapping="Wrap"
+                                                       Margin="0,6,0,0" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                                <Button Content="检查更新" Width="100"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Click="BtnAdminCheckUpdate_Click" />
+                                                <Button Content="去 GitHub 下载 →" Width="148" Margin="8,0,0,0"
+                                                        Style="{StaticResource PrimaryButton}"
+                                                        Click="BtnAdminGoGitHub_Click" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- 段 3：API 接口管理 -->
+                                <StackPanel x:Name="SegEndpoints" Visibility="Collapsed">
+                                    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,0">
                                     <StackPanel>
                                         <TextBlock Text="API 接口管理" FontSize="{DynamicResource TrmTextList}" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TrmInk}" />
@@ -1021,7 +1082,8 @@
                                         <TextBlock x:Name="LabAdminApiResult" FontSize="{DynamicResource TrmTextMeta}" Foreground="{DynamicResource TrmMeta}"
                                                    TextWrapping="Wrap" Margin="0,8,0,0" />
                                     </StackPanel>
-                                </Border>
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

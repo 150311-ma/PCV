@@ -265,6 +265,10 @@ namespace Pcv.Shell
             {
                 var page = e.Args[pageIndex + 1];
                 window.ShowViewForRender(page);
+                // API 页有分段：--segment market|endpoints|update|overview
+                var segIndex = Array.IndexOf(e.Args, "--segment");
+                if (segIndex >= 0 && segIndex + 1 < e.Args.Length)
+                    window.ShowApiSegmentForRender(e.Args[segIndex + 1]);
                 // 市场页是异步拉的，离屏渲染等不到；这里同步补一次，截图才有真实条目
                 if (page == "market") window.LoadMarketForRender();
                 // --community 让市场走 GitHub 源，验证社区搜索这条路
