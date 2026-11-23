@@ -186,6 +186,31 @@ def check(root: Path) -> list[str]:
     if catalog_tool and '"accessKey": access' in catalog_tool:
         errors.append("build_pcv_api.py 还在往 interfaces.json 里写 accessKey")
 
+    # 2.8) 联网请求必须能走通 IPv4
+    #
+    # 2026-11-23 实测出来的真故障：本机到 Cloudflare 的 IPv6 是黑洞，
+    # HttpWebRequest 会优先挑 IPv6，于是凭证校验必然超时 ——
+    # 维护模式在部分网络下**永远解不开**，而且报的是「连不上服务器」，
+    # 让人以为是服务端挂了。浏览器和 curl 没事，因为它们有 Happy Eyeballs。
+    #
+    # 所以：凭证模块不许再用 HttpWebRequest，必须走强制 IPv4 的 HttpsV4。
+    # 判据要盯「真的调用了」，不能在注释里提到这个词就报红 ——
+    # 那样的闸门会因为无关原因常红，最后没人看它。
+    admin_key = read(root / "src/Pcv.AdminKey/Entry.cs")
+    if admin_key and "(HttpWebRequest)WebRequest.Create" in admin_key:
+        errors.append("凭证模块又用回 HttpWebRequest 了 —— IPv6 不通的机器上会一直超时")
+
+    https_v4 = read(root / "src/Pcv.Modular.Abstractions/HttpsV4.cs")
+    if not https_v4:
+        errors.append("缺少 HttpsV4 —— 强制 IPv4 拨号的唯一实现不该被删")
+    else:
+        if "AddressFamily.InterNetwork," not in https_v4:
+            errors.append("HttpsV4 没有把 Socket 钉在 IPv4 上")
+        if "AuthenticateAsClient(uri.Host)" not in https_v4:
+            errors.append("HttpsV4 的 TLS 没用域名做 SNI/证书校验 —— 不许为了连通放松校验")
+        if "ServerCertificateValidationCallback" in https_v4:
+            errors.append("HttpsV4 里出现了证书校验回调解绑 —— 那等于关掉 TLS 校验")
+
     # 3) 检出之后要弹窗 + 结束进程
     if guard:
         if "SecurityAlertWindow" not in guard:
@@ -267,6 +292,9 @@ def inject_fault() -> int:
         ("Release 又开始带符号", "Directory.Build.props",
          lambda text: text.replace("<DebugType>none</DebugType>",
                                    "<DebugType>portable</DebugType>")),
+        ("凭证模块退回 HttpWebRequest（IPv6 超时）", "src/Pcv.AdminKey/Entry.cs",
+         lambda text: text.replace("return HttpsV4.Send(url, method, body, TimeoutMs);",
+                                   'var legacy = (HttpWebRequest)WebRequest.Create(url); return (0, "");', 1)),
         ("客户端被塞回明文密钥", "src/Pcv.Api/Entry.cs",
          lambda text: text.replace("private const int TimeoutMs",
                                    'private const string Legacy = "pcv-admin-2026";\n        private const int TimeoutMs', 1)),
