@@ -51,8 +51,10 @@ namespace Pcv.AdminKey
 
     public sealed class AdminKeyProvider : IAdminKeyProvider
     {
-        private const int TimeoutMs = 10000;
-        private const int MaxAttempts = 2;
+        private const int TimeoutMs = 15000;
+        // 3 次：这个网络到 Cloudflare 偶发首包丢失（curl 也会偶发空响应），
+        // 实测三轮里有约三分之一的是第一次不成、第二次才通。
+        private const int MaxAttempts = 3;
 
         private readonly IModuleContext _context;
         private readonly ILogger _log;
@@ -176,6 +178,17 @@ namespace Pcv.AdminKey
 
         // ── HTTP ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// 发请求。
+        ///
+        /// 走 <see cref="HttpsV4"/> 而不是 HttpWebRequest，是因为实测出来一个
+        /// 会让维护模式**在部分网络下永远解不开**的故障：本机到 Cloudflare 边缘的
+        /// IPv6 路由是黑洞，而 HttpWebRequest 会优先挑 IPv6 地址，于是请求必然超时
+        /// （8 秒 `操作超时`）；同一个 URL 用 IPv4 拨号 2.5 秒就回来。
+        /// 浏览器和 curl 没事，是因为它们有 Happy Eyeballs 回退。
+        ///
+        /// 这里保留一次重试：第一次失败常是 TLS 握手或首包抖动。
+        /// </summary>
         private static (int Status, string Body) Http(string url, string method, string body)
         {
             Exception last = null;
@@ -183,37 +196,7 @@ namespace Pcv.AdminKey
             {
                 try
                 {
-                    ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-                    var request = (HttpWebRequest)WebRequest.Create(
-                        url + (url.Contains("?") ? "&" : "?") + "n=" + attempt);
-                    request.Method = method;
-                    request.Timeout = TimeoutMs;
-                    request.ReadWriteTimeout = TimeoutMs;
-                    request.UserAgent = "PCV-AdminKey/2";
-                    request.ContentType = "application/json";
-                    request.Accept = "application/json";
-                    request.Headers[HttpRequestHeader.CacheControl] = "no-cache";
-
-                    if (!string.IsNullOrEmpty(body))
-                    {
-                        var bytes = Encoding.UTF8.GetBytes(body);
-                        request.ContentLength = bytes.Length;
-                        using (var stream = request.GetRequestStream())
-                            stream.Write(bytes, 0, bytes.Length);
-                    }
-
-                    using (var response = (HttpWebResponse)request.GetResponse())
-                    using (var stream = response.GetResponseStream())
-                    using (var reader = new StreamReader(stream, Encoding.UTF8))
-                        return ((int)response.StatusCode, reader.ReadToEnd());
-                }
-                catch (WebException ex) when (ex.Response is HttpWebResponse error)
-                {
-                    // 401 / 429 是「有意义的回答」，不是网络故障 —— 直接读正文返回
-                    var response = error;
-                    using (var stream = response.GetResponseStream())
-                    using (var reader = new StreamReader(stream, Encoding.UTF8))
-                        return ((int)response.StatusCode, reader.ReadToEnd());
+                    return HttpsV4.Send(url, method, body, TimeoutMs);
                 }
                 catch (Exception ex) { last = ex; }
             }
